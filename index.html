@@ -214,6 +214,12 @@
   .log-provider:hover, .log-cost:hover, .log-reminder:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
   .log-reminder.reminder-soon{ color:var(--accent); }
   .log-reminder.reminder-overdue{ color:var(--danger); }
+  .log-gcal{
+    font-family:'IBM Plex Mono', monospace; font-size:.72rem; color:var(--muted);
+    text-decoration:none; border:1px solid var(--line); border-radius:999px;
+    padding:.15rem .55rem; white-space:nowrap;
+  }
+  .log-gcal:hover{ color:var(--accent); border-color:var(--accent); }
   .log-tools{ display:flex; gap:.3rem; align-items:center; }
   .log-tools button{
     background:transparent; border:none; color:var(--muted); padding:.15rem .3rem;
@@ -313,6 +319,21 @@ function reminderStatus(dateStr){
   return { cls: '', label: `⏰ ${fmtDate(dateStr)}` };
 }
 
+function gcalUrl(h, vehicleName){
+  if(!h.reminder_date) return '';
+  const [y, m, d] = h.reminder_date.split('-').map(Number);
+  const start = h.reminder_date.replace(/-/g, '');
+  const endDate = new Date(y, (m || 1) - 1, d + 1);
+  const end = `${endDate.getFullYear()}${String(endDate.getMonth() + 1).padStart(2, '0')}${String(endDate.getDate()).padStart(2, '0')}`;
+  const title = encodeURIComponent(`Mantenimiento: ${h.description || vehicleName || ''}`.trim());
+  const lines = [];
+  if(vehicleName) lines.push(`Vehículo: ${vehicleName}`);
+  if(h.provider) lines.push(`Proveedor: ${h.provider}`);
+  if(h.cost != null) lines.push(`Costo: ${fmtCost(h.cost)}`);
+  const details = encodeURIComponent(lines.join('\n'));
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${details}`;
+}
+
 // --- data loading ----------------------------------------------------
 async function loadAll(){
   setStatus('Actualizando…');
@@ -392,7 +413,7 @@ function renderPendiente(p){
   </li>`;
 }
 
-function renderHistorial(h){
+function renderHistorial(h, vehicleName){
   const rem = reminderStatus(h.reminder_date);
   return `
   <li class="log-entry" data-hist-id="${h.id}">
@@ -404,6 +425,7 @@ function renderHistorial(h){
           <span class="log-provider" data-action="edit-hist-provider" data-hist-id="${h.id}">${h.provider ? esc(h.provider) : '<span class="ph">+ proveedor</span>'}</span>
           <span class="log-cost" data-action="edit-hist-cost" data-hist-id="${h.id}">${h.cost != null ? esc(fmtCost(h.cost)) : '<span class="ph">+ costo</span>'}</span>
           <span class="log-reminder ${rem ? rem.cls : ''}" data-action="edit-hist-reminder" data-hist-id="${h.id}">${rem ? esc(rem.label) : '<span class="ph">+ recordatorio</span>'}</span>
+          ${rem ? `<a class="log-gcal" href="${gcalUrl(h, vehicleName)}" target="_blank" rel="noopener" title="Agregar a Google Calendar">📅 Calendar</a>` : ''}
         </div>
       </div>
       <div class="log-tools">
@@ -468,7 +490,7 @@ function renderPanels(){
 
       <div class="v-col">
         <h3>Historial de mantenimiento</h3>
-        <ul class="log-list">${v.historial.map(renderHistorial).join('')}</ul>
+        <ul class="log-list">${v.historial.map(h => renderHistorial(h, v.name)).join('')}</ul>
         <form class="add-log-form" data-vid="${v.id}">
           <input class="log-date-input" type="date" required>
           <input class="log-desc-input" type="text" placeholder="¿Qué se hizo?" required>
