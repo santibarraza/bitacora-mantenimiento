@@ -20,13 +20,6 @@
     --bg:#11242b;
     --danger:#e2543e;
   }
-  @media (prefers-color-scheme: light){
-    :root:not([data-theme="light"]){
-      --ink:#20302f; --panel:#fbf7ec; --panel-2:#f3ecd9; --text:#1c2b2a;
-      --muted:#5e6e6a; --line:rgba(28,43,42,0.12); --accent:#c2680a;
-      --accent-ink:#fff6e8; --ok:#2f6e4c; --bg:#f1ead9; --danger:#a9382a;
-    }
-  }
   :root[data-theme="light"]{
     --ink:#20302f; --panel:#fbf7ec; --panel-2:#f3ecd9; --text:#1c2b2a;
     --muted:#5e6e6a; --line:rgba(28,43,42,0.12); --accent:#c2680a;
@@ -148,6 +141,12 @@
   .add-log-form .log-desc-input{ flex:1; min-width:160px; }
   .add-log-form .log-provider-input{ width:130px; }
   .add-log-form .log-cost-input{ width:100px; }
+  .add-log-form .mini-field{ display:flex; flex-direction:column; gap:.2rem; }
+  .add-log-form .mini-field span{
+    font-family:'IBM Plex Mono', monospace; font-size:.62rem; letter-spacing:.05em;
+    text-transform:uppercase; color:var(--muted);
+  }
+  .add-log-form .log-reminder-input{ width:135px; }
   .btn-ghost{
     font-family:'IBM Plex Mono', monospace; font-size:.74rem; letter-spacing:.05em;
     text-transform:uppercase; background:transparent; border:1px solid var(--line);
@@ -207,12 +206,14 @@
   .log-desc{ display:block; font-size:.92rem; line-height:1.45; cursor:text; border-radius:2px; }
   .log-desc:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
   .log-meta{ display:flex; gap:.75rem; margin-top:.35rem; flex-wrap:wrap; }
-  .log-provider, .log-cost{
+  .log-provider, .log-cost, .log-reminder{
     font-family:'IBM Plex Mono', monospace; font-size:.76rem; color:var(--muted);
     cursor:text; border-radius:2px;
   }
   .log-cost{ color:var(--accent); }
-  .log-provider:hover, .log-cost:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
+  .log-provider:hover, .log-cost:hover, .log-reminder:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
+  .log-reminder.reminder-soon{ color:var(--accent); }
+  .log-reminder.reminder-overdue{ color:var(--danger); }
   .log-tools{ display:flex; gap:.3rem; align-items:center; }
   .log-tools button{
     background:transparent; border:none; color:var(--muted); padding:.15rem .3rem;
@@ -301,6 +302,17 @@ function fmtCost(value){
   catch(e){ return '$' + n.toFixed(2); }
 }
 
+function reminderStatus(dateStr){
+  if(!dateStr) return null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const d = new Date(dateStr + 'T00:00:00');
+  const diffDays = Math.round((d - today) / 86400000);
+  if(diffDays < 0) return { cls: 'reminder-overdue', label: `⏰ ${fmtDate(dateStr)} · vencido hace ${Math.abs(diffDays)}d` };
+  if(diffDays === 0) return { cls: 'reminder-overdue', label: `⏰ ${fmtDate(dateStr)} · hoy` };
+  if(diffDays <= 14) return { cls: 'reminder-soon', label: `⏰ ${fmtDate(dateStr)} · en ${diffDays}d` };
+  return { cls: '', label: `⏰ ${fmtDate(dateStr)}` };
+}
+
 // --- data loading ----------------------------------------------------
 async function loadAll(){
   setStatus('Actualizando…');
@@ -381,6 +393,7 @@ function renderPendiente(p){
 }
 
 function renderHistorial(h){
+  const rem = reminderStatus(h.reminder_date);
   return `
   <li class="log-entry" data-hist-id="${h.id}">
     <div class="log-row">
@@ -390,6 +403,7 @@ function renderHistorial(h){
         <div class="log-meta">
           <span class="log-provider" data-action="edit-hist-provider" data-hist-id="${h.id}">${h.provider ? esc(h.provider) : '<span class="ph">+ proveedor</span>'}</span>
           <span class="log-cost" data-action="edit-hist-cost" data-hist-id="${h.id}">${h.cost != null ? esc(fmtCost(h.cost)) : '<span class="ph">+ costo</span>'}</span>
+          <span class="log-reminder ${rem ? rem.cls : ''}" data-action="edit-hist-reminder" data-hist-id="${h.id}">${rem ? esc(rem.label) : '<span class="ph">+ recordatorio</span>'}</span>
         </div>
       </div>
       <div class="log-tools">
@@ -460,6 +474,7 @@ function renderPanels(){
           <input class="log-desc-input" type="text" placeholder="¿Qué se hizo?" required>
           <input class="log-provider-input" type="text" placeholder="Proveedor">
           <input class="log-cost-input" type="text" inputmode="decimal" placeholder="Costo">
+          <label class="mini-field"><span>Recordatorio</span><input class="log-reminder-input" type="date" title="Fecha para recordarte el próximo servicio (opcional)"></label>
           <button class="btn-ghost" type="submit">Añadir</button>
         </form>
       </div>
@@ -560,10 +575,14 @@ function handleEditableSpan(el){
       const num = val === '' ? null : parseFloat(val.replace(/[^0-9.]/g, ''));
       await supabase.from('historial').update({ cost: (num == null || isNaN(num)) ? null : num }).eq('id', id);
     };
+  } else if(action === 'edit-hist-reminder'){
+    const id = el.dataset.histId; const h = findHistorial(id);
+    value = h.reminder_date || '';
+    onSave = async val => { await supabase.from('historial').update({ reminder_date: val || null }).eq('id', id); };
   } else return;
 
   const input = document.createElement('input');
-  input.type = 'text';
+  input.type = action === 'edit-hist-reminder' ? 'date' : 'text';
   input.value = value || '';
   input.className = 'inline-edit-input';
   el.replaceWith(input);
@@ -736,9 +755,10 @@ document.addEventListener('submit', async e => {
     const desc = form.querySelector('.log-desc-input').value.trim();
     const provider = form.querySelector('.log-provider-input').value.trim();
     const costRaw = form.querySelector('.log-cost-input').value.trim();
+    const reminderRaw = form.querySelector('.log-reminder-input').value;
     if(!date || !desc) return;
     const cost = costRaw === '' ? null : parseFloat(costRaw.replace(/[^0-9.]/g, ''));
-    await supabase.from('historial').insert({ vehicle_id: vid, service_date: date, description: desc, provider, cost: isNaN(cost) ? null : cost });
+    await supabase.from('historial').insert({ vehicle_id: vid, service_date: date, description: desc, provider, cost: isNaN(cost) ? null : cost, reminder_date: reminderRaw || null });
     form.reset();
     loadAll();
     return;
