@@ -128,11 +128,16 @@
     padding:.35rem .75rem; letter-spacing:.02em;
   }
   .stat-chip strong{ color:var(--accent); font-weight:inherit; }
+  .v-odometer{ display:flex; align-items:center; gap:.3rem; }
+  .v-odo-value, .v-odo-unit{ cursor:text; border-radius:2px; }
+  .v-odo-value:hover, .v-odo-unit:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
+  .v-odo-value{ color:var(--accent); }
   .icon-btn{
     background:transparent; border:none; color:var(--muted); cursor:pointer;
     font-size:1rem; line-height:1; padding:.2rem .4rem; font-family:inherit;
   }
   .icon-btn:hover{ color:var(--danger); }
+  .icon-btn.export-pdf-btn:hover{ color:var(--accent); }
 
   .v-info{ margin-bottom:1.75rem; }
   .v-info h3, .v-col h3{
@@ -176,6 +181,7 @@
   }
   .add-log-form .log-reminder-input{ width:135px; }
   .add-log-form .log-repeat-select{ width:110px; }
+  .add-log-form .log-odometer-input{ width:110px; }
   .btn-ghost{
     font-family:'Bebas Neue', sans-serif; font-size:.74rem; letter-spacing:.05em;
     text-transform:uppercase; background:transparent; border:1px solid var(--line);
@@ -201,6 +207,14 @@
   @media (min-width:760px){ .v-body{ flex-direction:row; } .v-col{ flex:1; min-width:0; } }
 
   .checklist{ list-style:none; margin:0 0 .75rem; padding:0; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:var(--panel); }
+  .all-pend-tab{ border-style:dashed; }
+  .all-pend-tab.active{ border-style:solid; }
+  .all-pend-groups{ display:flex; flex-direction:column; gap:1.5rem; }
+  .all-pend-vehicle{
+    font-family:'Roboto', sans-serif; font-weight:500; font-size:1rem;
+    letter-spacing:.02em; margin:0 0 .6rem; cursor:pointer; display:inline-block;
+  }
+  .all-pend-vehicle:hover{ color:var(--accent); }
   .check-item{ padding:.7rem .9rem; border-bottom:1px solid var(--line); }
   .check-item:last-child{ border-bottom:none; }
   .check-item label{ display:flex; align-items:flex-start; gap:.75rem; cursor:pointer; }
@@ -235,12 +249,12 @@
   .log-desc{ display:block; font-size:.92rem; line-height:1.45; cursor:text; border-radius:2px; }
   .log-desc:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
   .log-meta{ display:flex; gap:.75rem; margin-top:.35rem; flex-wrap:wrap; }
-  .log-provider, .log-cost, .log-reminder{
+  .log-provider, .log-cost, .log-reminder, .log-odometer{
     font-family:'Bebas Neue', sans-serif; font-size:.76rem; color:var(--muted);
     cursor:text; border-radius:2px;
   }
   .log-cost{ color:var(--accent); }
-  .log-provider:hover, .log-cost:hover, .log-reminder:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
+  .log-provider:hover, .log-cost:hover, .log-reminder:hover, .log-odometer:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
   .log-reminder.reminder-soon{ color:var(--accent); }
   .log-reminder.reminder-overdue{ color:var(--danger); }
   .log-gcal{
@@ -314,6 +328,7 @@ const supabase = createClient('https://jfivdvkhifqhirrqhcfl.supabase.co', 'sb_pu
 
 const ATTACH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 12.5l6.5-6.5a3 3 0 1 1 4.24 4.24L10.5 18.5a5 5 0 1 1-7.07-7.07L12 3"/></svg>';
 const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const ALL_PENDIENTES = '__all_pendientes__';
 
 let state = { vehicles: [], activeId: null };
 
@@ -372,6 +387,11 @@ function addMonths(dateStr, months){
   const [y, m, d] = dateStr.split('-').map(Number);
   const dt = new Date(y, (m - 1) + months, d);
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+}
+
+function numFmt(n){
+  if(n == null || isNaN(n)) return '';
+  return new Intl.NumberFormat('es-MX').format(n);
 }
 
 function costStats(historial){
@@ -453,7 +473,7 @@ async function loadAll(){
       pendientes: pend.filter(p => p.vehicle_id === v.id).map(p => ({ ...p, attachments: pendAtt.filter(a => a.pendiente_id === p.id) })),
       historial: hist.filter(h => h.vehicle_id === v.id).map(h => ({ ...h, attachments: histAtt.filter(a => a.historial_id === h.id) })),
     }));
-    if(!state.activeId || !state.vehicles.some(v => v.id === state.activeId)){
+    if(!state.activeId || (state.activeId !== ALL_PENDIENTES && !state.vehicles.some(v => v.id === state.activeId))){
       state.activeId = state.vehicles[0]?.id || null;
     }
     setStatus('');
@@ -468,7 +488,11 @@ async function loadAll(){
 function render(){ renderTabs(); renderPanels(); renderGlobalReminders(); }
 
 function renderTabs(){
-  tabsEl.innerHTML = state.vehicles.map(v => `
+  const totalOpen = state.vehicles.reduce((sum, v) => sum + v.pendientes.filter(p => !p.checked).length, 0);
+  const allTab = state.vehicles.length ? `
+    <button type="button" class="vehicle-tab all-pend-tab${state.activeId === ALL_PENDIENTES ? ' active' : ''}" data-vid="${ALL_PENDIENTES}">☑ Todos los pendientes${totalOpen ? ` (${totalOpen})` : ''}</button>
+  ` : '';
+  tabsEl.innerHTML = allTab + state.vehicles.map(v => `
     <button type="button" class="vehicle-tab${v.id === state.activeId ? ' active' : ''}" data-vid="${v.id}">${esc(v.name)}</button>
   `).join('');
 }
@@ -497,8 +521,9 @@ function renderPendiente(p){
   </li>`;
 }
 
-function renderHistorial(h, vehicleName){
+function renderHistorial(h, vehicleName, vehicleUnit){
   const rem = reminderStatus(h.reminder_date);
+  const unit = vehicleUnit || 'km';
   return `
   <li class="log-entry" data-hist-id="${h.id}">
     <div class="log-row">
@@ -508,6 +533,7 @@ function renderHistorial(h, vehicleName){
         <div class="log-meta">
           <span class="log-provider" data-action="edit-hist-provider" data-hist-id="${h.id}">${h.provider ? esc(h.provider) : '<span class="ph">+ proveedor</span>'}</span>
           <span class="log-cost" data-action="edit-hist-cost" data-hist-id="${h.id}">${h.cost != null ? esc(fmtCost(h.cost)) : '<span class="ph">+ costo</span>'}</span>
+          <span class="log-odometer" data-action="edit-hist-odometer" data-hist-id="${h.id}">${h.odometer_value != null ? esc(numFmt(h.odometer_value)) + ' ' + esc(unit) : '<span class="ph">+ lectura</span>'}</span>
           <span class="log-reminder ${rem ? rem.cls : ''}" data-action="edit-hist-reminder" data-hist-id="${h.id}">${rem ? esc(rem.label) : '<span class="ph">+ recordatorio</span>'}</span>
           ${rem ? `<a class="log-gcal" href="${gcalUrl(h, vehicleName)}" target="_blank" rel="noopener" title="Agregar a Google Calendar">📅 Calendar</a>` : ''}
         </div>
@@ -523,6 +549,7 @@ function renderHistorial(h, vehicleName){
 }
 
 function renderPanels(){
+  if(state.activeId === ALL_PENDIENTES){ renderAllPendientesPanel(); return; }
   const v = state.vehicles.find(x => x.id === state.activeId);
   if(!v){
     panelsEl.innerHTML = '<p class="empty-state">Agrega tu primer vehículo para empezar.</p>';
@@ -530,19 +557,24 @@ function renderPanels(){
   }
   const lastService = v.historial.length ? v.historial[0].service_date : null;
   const stats = costStats(v.historial);
+  const unit = v.odometer_unit || 'km';
   panelsEl.innerHTML = `
     <div class="vehicle-panel-header">
       <span class="v-name" data-action="edit-vehicle-name" data-vid="${v.id}" title="Click para renombrar">${esc(v.name)}</span>
       ${v.type ? `<span class="v-type">${esc(v.type)}</span>` : ''}
       ${lastService ? `<span class="v-last">Último servicio: ${fmtDate(lastService)}</span>` : '<span class="v-last"></span>'}
+      <button type="button" class="icon-btn export-pdf-btn" data-vid="${v.id}" title="Exportar historial a PDF">📄</button>
       <button type="button" class="icon-btn delete-vehicle" data-vid="${v.id}" title="Eliminar vehículo">✕</button>
     </div>
 
-    ${stats.total > 0 ? `
     <div class="v-stats">
-      <span class="stat-chip">Total mantenimiento: <strong>${esc(fmtCost(stats.total))}</strong></span>
+      <span class="stat-chip v-odometer">
+        <span class="v-odo-value" data-action="edit-vehicle-odo-value" data-vid="${v.id}" title="Click para actualizar la lectura">${v.odometer_value != null ? esc(numFmt(v.odometer_value)) : '<span class="ph">+ lectura</span>'}</span>
+        <span class="v-odo-unit" data-action="edit-vehicle-odo-unit" data-vid="${v.id}" title="Click para cambiar la unidad">${esc(unit)}</span>
+      </span>
+      ${stats.total > 0 ? `<span class="stat-chip">Total mantenimiento: <strong>${esc(fmtCost(stats.total))}</strong></span>` : ''}
       ${stats.thisYear > 0 ? `<span class="stat-chip">Este año: <strong>${esc(fmtCost(stats.thisYear))}</strong></span>` : ''}
-    </div>` : ''}
+    </div>
 
     <div class="v-info">
       <h3>Información general</h3>
@@ -581,12 +613,13 @@ function renderPanels(){
 
       <div class="v-col">
         <h3>Historial de mantenimiento</h3>
-        <ul class="log-list">${v.historial.map(h => renderHistorial(h, v.name)).join('')}</ul>
+        <ul class="log-list">${v.historial.map(h => renderHistorial(h, v.name, v.odometer_unit)).join('')}</ul>
         <form class="add-log-form" data-vid="${v.id}">
           <input class="log-date-input" type="date" required>
           <input class="log-desc-input" type="text" placeholder="¿Qué se hizo?" required>
           <input class="log-provider-input" type="text" placeholder="Proveedor">
           <input class="log-cost-input" type="text" inputmode="decimal" placeholder="Costo">
+          <input class="log-odometer-input" type="text" inputmode="decimal" placeholder="Lectura (${esc(unit)})">
           <label class="mini-field"><span>Repetir</span>
             <select class="log-repeat-select">
               <option value="">Sin repetir</option>
@@ -600,6 +633,34 @@ function renderPanels(){
           <button class="btn-ghost" type="submit">Añadir</button>
         </form>
       </div>
+    </div>
+  `;
+}
+
+function renderAllPendientesPanel(){
+  const groups = state.vehicles.filter(v => v.pendientes.length);
+  const totalOpen = state.vehicles.reduce((sum, v) => sum + v.pendientes.filter(p => !p.checked).length, 0);
+  if(!groups.length){
+    panelsEl.innerHTML = `
+      <div class="vehicle-panel-header">
+        <span class="v-name">Todos los pendientes</span>
+      </div>
+      <p class="empty-state">No hay pendientes en ningún vehículo.</p>
+    `;
+    return;
+  }
+  panelsEl.innerHTML = `
+    <div class="vehicle-panel-header">
+      <span class="v-name">Todos los pendientes</span>
+      <span class="v-last">${totalOpen} sin marcar</span>
+    </div>
+    <div class="all-pend-groups">
+      ${groups.map(v => `
+        <div class="all-pend-group">
+          <h3 class="all-pend-vehicle" data-action="jump-vehicle" data-vid="${v.id}" title="Ir a ${esc(v.name)}">${esc(v.name)}</h3>
+          <ul class="checklist">${v.pendientes.map(renderPendiente).join('')}</ul>
+        </div>
+      `).join('')}
     </div>
   `;
 }
@@ -658,6 +719,127 @@ async function uploadAttachment(file, folder){
   return { url: data.publicUrl, kind: isImage ? 'image' : 'pdf', name: file.name };
 }
 
+function imageUrlToDataUrl(url){
+  return fetch(url).then(r => r.blob()).then(blob => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  }));
+}
+
+// --- PDF export ------------------------------------------------------
+async function exportVehiclePDF(vid){
+  const v = findVehicle(vid);
+  if(!v) return;
+  const btn = document.querySelector(`.export-pdf-btn[data-vid="${vid}"]`);
+  if(btn) btn.disabled = true;
+  const prevLabel = btn ? btn.textContent : '';
+  if(btn) btn.textContent = '⏳';
+  try{
+    const { jsPDF } = await import('https://esm.sh/jspdf@2.5.1');
+    const unit = v.odometer_unit || 'km';
+    const doc = new jsPDF({ unit: 'mm', format: 'letter' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const marginX = 15;
+    let y = 18;
+
+    function ensureSpace(h){
+      if(y + h > pageH - 15){ doc.addPage(); y = 18; }
+    }
+    function heading(text){
+      ensureSpace(10);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
+      doc.text(text, marginX, y);
+      y += 7;
+      doc.setFont('helvetica', 'normal');
+    }
+    function line(text, size = 10){
+      doc.setFontSize(size);
+      const wrapped = doc.splitTextToSize(text, pageW - marginX * 2);
+      wrapped.forEach(l => { ensureSpace(6); doc.text(l, marginX, y); y += 5.3; });
+    }
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(18);
+    doc.text(`Bitácora de Mantenimiento — ${v.name}`, marginX, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(120);
+    doc.text(`Generado el ${new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}`, marginX, y);
+    doc.setTextColor(0);
+    y += 9;
+
+    if(v.type) line(`Tipo: ${v.type}`);
+    if(v.odometer_value != null) line(`${unit === 'km' ? 'Kilometraje' : 'Lectura'} actual: ${numFmt(v.odometer_value)} ${unit}`);
+    y += 3;
+
+    heading('Información general');
+    if(v.info.length) v.info.forEach(row => line(`${row.label}: ${row.value || '—'}`));
+    else line('Sin información registrada.');
+    y += 3;
+
+    heading('Pendientes');
+    if(v.pendientes.length) v.pendientes.forEach(p => line(`${p.checked ? '[x]' : '[ ]'} ${p.text}`));
+    else line('Sin pendientes.');
+    y += 3;
+
+    heading('Historial de mantenimiento');
+    if(v.historial.length){
+      v.historial.forEach(h => {
+        ensureSpace(11);
+        doc.setFont('helvetica', 'bold');
+        line(`${fmtDate(h.service_date)} — ${h.description}`, 10.5);
+        doc.setFont('helvetica', 'normal');
+        const details = [];
+        if(h.provider) details.push(`Proveedor: ${h.provider}`);
+        if(h.cost != null) details.push(`Costo: ${fmtCost(h.cost)}`);
+        if(h.odometer_value != null) details.push(`${unit === 'km' ? 'Kilometraje' : 'Lectura'}: ${numFmt(h.odometer_value)} ${unit}`);
+        if(h.reminder_date) details.push(`Recordatorio: ${fmtDate(h.reminder_date)}`);
+        if(details.length) line(details.join('   ·   '), 9);
+        y += 2;
+      });
+    } else {
+      line('Sin historial registrado.');
+    }
+
+    const photoItems = [
+      ...v.photos.map(p => ({ url: p.url, caption: 'Foto del vehículo' })),
+      ...v.pendientes.flatMap(p => p.attachments.filter(a => a.kind === 'image').map(a => ({ url: a.url, caption: `Pendiente: ${p.text}` }))),
+      ...v.historial.flatMap(h => h.attachments.filter(a => a.kind === 'image').map(a => ({ url: a.url, caption: `${fmtDate(h.service_date)} — ${h.description}` }))),
+    ];
+    if(photoItems.length){
+      doc.addPage(); y = 18;
+      heading('Fotos');
+      for(const item of photoItems){
+        try{
+          const dataUrl = await imageUrlToDataUrl(item.url);
+          const img = await loadImageEl(dataUrl);
+          const maxW = pageW - marginX * 2, maxH = 75;
+          const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+          const w = img.width * scale, h = img.height * scale;
+          ensureSpace(h + 10);
+          doc.addImage(dataUrl, 'JPEG', marginX, y, w, h);
+          y += h + 3;
+          doc.setFontSize(8.3); doc.setTextColor(110);
+          doc.text(item.caption, marginX, y);
+          doc.setTextColor(0);
+          y += 7;
+        }catch(err){ console.error('No se pudo cargar una imagen para el PDF', err); }
+      }
+    }
+
+    const fileSlug = v.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'vehiculo';
+    const today = new Date();
+    const dateSlug = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    doc.save(`bitacora-${fileSlug}-${dateSlug}.pdf`);
+  }catch(err){
+    console.error(err);
+    alert('No se pudo generar el PDF. Revisa tu conexión e intenta de nuevo.');
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = prevLabel || '📄'; }
+  }
+}
+
 // --- inline edit -----------------------------------------------------
 function findHistorial(id){
   for(const v of state.vehicles){ const h = v.historial.find(x => x.id === id); if(h) return h; }
@@ -701,6 +883,24 @@ function handleEditableSpan(el){
     const id = el.dataset.histId; const h = findHistorial(id);
     value = h.reminder_date || '';
     onSave = async val => { await supabase.from('historial').update({ reminder_date: val || null }).eq('id', id); };
+  } else if(action === 'edit-hist-odometer'){
+    const id = el.dataset.histId; const h = findHistorial(id);
+    value = h.odometer_value != null ? String(h.odometer_value) : '';
+    onSave = async val => {
+      const num = val === '' ? null : parseFloat(val.replace(/[^0-9.]/g, ''));
+      await supabase.from('historial').update({ odometer_value: (num == null || isNaN(num)) ? null : num }).eq('id', id);
+    };
+  } else if(action === 'edit-vehicle-odo-value'){
+    const vid = el.dataset.vid; const v = findVehicle(vid);
+    value = v.odometer_value != null ? String(v.odometer_value) : '';
+    onSave = async val => {
+      const num = val === '' ? null : parseFloat(val.replace(/[^0-9.]/g, ''));
+      await supabase.from('vehicles').update({ odometer_value: (num == null || isNaN(num)) ? null : num }).eq('id', vid);
+    };
+  } else if(action === 'edit-vehicle-odo-unit'){
+    const vid = el.dataset.vid; const v = findVehicle(vid);
+    value = v.odometer_unit || 'km';
+    onSave = async val => { await supabase.from('vehicles').update({ odometer_unit: val || 'km' }).eq('id', vid); };
   } else return;
 
   const input = document.createElement('input');
@@ -741,6 +941,12 @@ document.addEventListener('click', async e => {
     if(!form.hidden) document.getElementById('newVehicleName').focus();
     return;
   }
+
+  const jumpVehicle = e.target.closest('[data-action="jump-vehicle"]');
+  if(jumpVehicle){ state.activeId = jumpVehicle.dataset.vid; render(); return; }
+
+  const pdfBtn = e.target.closest('.export-pdf-btn');
+  if(pdfBtn){ exportVehiclePDF(pdfBtn.dataset.vid); return; }
 
   const editTarget = e.target.closest('[data-action]');
   if(editTarget && editTarget.tagName === 'SPAN'){ handleEditableSpan(editTarget); return; }
@@ -892,10 +1098,23 @@ document.addEventListener('submit', async e => {
     const desc = form.querySelector('.log-desc-input').value.trim();
     const provider = form.querySelector('.log-provider-input').value.trim();
     const costRaw = form.querySelector('.log-cost-input').value.trim();
+    const odometerRaw = form.querySelector('.log-odometer-input').value.trim();
     const reminderRaw = form.querySelector('.log-reminder-input').value;
     if(!date || !desc) return;
     const cost = costRaw === '' ? null : parseFloat(costRaw.replace(/[^0-9.]/g, ''));
-    await supabase.from('historial').insert({ vehicle_id: vid, service_date: date, description: desc, provider, cost: isNaN(cost) ? null : cost, reminder_date: reminderRaw || null });
+    const odometer = odometerRaw === '' ? null : parseFloat(odometerRaw.replace(/[^0-9.]/g, ''));
+    await supabase.from('historial').insert({
+      vehicle_id: vid, service_date: date, description: desc, provider,
+      cost: isNaN(cost) ? null : cost,
+      odometer_value: (odometer == null || isNaN(odometer)) ? null : odometer,
+      reminder_date: reminderRaw || null,
+    });
+    if(odometer != null && !isNaN(odometer)){
+      const v = findVehicle(vid);
+      if(v && (v.odometer_value == null || odometer > v.odometer_value)){
+        await supabase.from('vehicles').update({ odometer_value: odometer }).eq('id', vid);
+      }
+    }
     form.reset();
     loadAll();
     return;
