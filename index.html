@@ -271,6 +271,51 @@
   .log-tools button:hover{ color:var(--accent); }
   .log-tools svg{ width:1rem; height:1rem; }
 
+  .provider-list{ display:flex; flex-direction:column; gap:.6rem; margin-bottom:1rem; }
+  .provider-card{ background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:.75rem .9rem; }
+  .provider-row{ display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+  .provider-name{
+    font-family:'Roboto', sans-serif; font-weight:500; font-size:.98rem;
+    cursor:text; border-radius:2px; margin-right:auto;
+  }
+  .provider-name:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
+  .provider-category{
+    font-family:'Bebas Neue', sans-serif; font-size:.74rem; color:var(--accent);
+    text-transform:uppercase; letter-spacing:.04em; cursor:text;
+    border:1px solid var(--line); border-radius:999px; padding:.15rem .55rem;
+  }
+  .provider-category:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
+  .provider-meta{ display:flex; gap:1.1rem; flex-wrap:wrap; margin-top:.5rem; }
+  .provider-phone, .provider-address{
+    font-size:.85rem; color:var(--muted); cursor:text; border-radius:2px;
+  }
+  .provider-phone:hover, .provider-address:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
+  .provider-links{ display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.6rem; }
+  .provider-link{
+    font-family:'Bebas Neue', sans-serif; font-size:.72rem; letter-spacing:.04em;
+    text-transform:uppercase; color:var(--text); text-decoration:none;
+    border:1px solid var(--line); border-radius:999px; padding:.3rem .7rem;
+  }
+  .provider-link:hover{ color:var(--accent); border-color:var(--accent); }
+  .provider-notes{
+    display:block; margin-top:.55rem; font-size:.85rem; color:var(--muted);
+    font-style:italic; cursor:text; border-radius:2px;
+  }
+  .provider-notes:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
+
+  .add-provider-form{
+    display:flex; gap:.5rem; flex-wrap:wrap; align-items:center;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:6px; padding:.55rem .7rem;
+  }
+  .add-provider-form input{
+    background:var(--panel); color:var(--text); border:1px solid var(--line);
+    border-radius:5px; padding:.5rem .65rem; font-family:inherit; font-size:.85rem;
+  }
+  .add-provider-form .provider-name-input{ flex:1; min-width:160px; }
+  .add-provider-form .provider-category-input{ width:150px; }
+  .add-provider-form .provider-phone-input{ width:135px; }
+  .add-provider-form .provider-address-input{ flex:1; min-width:160px; }
+
   .file-chip{
     display:flex; align-items:center; gap:.4rem; background:var(--panel-2);
     border:1px solid var(--line); border-radius:6px; padding:.35rem .5rem .35rem .7rem;
@@ -329,8 +374,9 @@ const supabase = createClient('https://jfivdvkhifqhirrqhcfl.supabase.co', 'sb_pu
 const ATTACH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 12.5l6.5-6.5a3 3 0 1 1 4.24 4.24L10.5 18.5a5 5 0 1 1-7.07-7.07L12 3"/></svg>';
 const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const ALL_PENDIENTES = '__all_pendientes__';
+const PROVIDERS_VIEW = '__providers__';
 
-let state = { vehicles: [], activeId: null };
+let state = { vehicles: [], providers: [], activeId: null };
 
 const statusLine = document.getElementById('statusLine');
 const tabsEl = document.getElementById('vehicleTabs');
@@ -446,12 +492,14 @@ async function loadAll(){
     if(ve) throw ve;
     const ids = (vehicles || []).map(v => v.id);
     const empty = { data: [] };
-    const [infoR, photosR, pendR, histR] = ids.length ? await Promise.all([
-      supabase.from('vehicle_info').select('*').in('vehicle_id', ids).order('sort_order'),
-      supabase.from('vehicle_photos').select('*').in('vehicle_id', ids).order('created_at'),
-      supabase.from('pendientes').select('*').in('vehicle_id', ids).order('sort_order'),
-      supabase.from('historial').select('*').in('vehicle_id', ids).order('service_date', { ascending: false }),
-    ]) : [empty, empty, empty, empty];
+    const [infoR, photosR, pendR, histR, providersR] = await Promise.all([
+      ids.length ? supabase.from('vehicle_info').select('*').in('vehicle_id', ids).order('sort_order') : Promise.resolve(empty),
+      ids.length ? supabase.from('vehicle_photos').select('*').in('vehicle_id', ids).order('created_at') : Promise.resolve(empty),
+      ids.length ? supabase.from('pendientes').select('*').in('vehicle_id', ids).order('sort_order') : Promise.resolve(empty),
+      ids.length ? supabase.from('historial').select('*').in('vehicle_id', ids).order('service_date', { ascending: false }) : Promise.resolve(empty),
+      supabase.from('providers').select('*').order('sort_order'),
+    ]);
+    state.providers = providersR.data || [];
 
     const pend = pendR.data || [];
     const hist = histR.data || [];
@@ -473,7 +521,8 @@ async function loadAll(){
       pendientes: pend.filter(p => p.vehicle_id === v.id).map(p => ({ ...p, attachments: pendAtt.filter(a => a.pendiente_id === p.id) })),
       historial: hist.filter(h => h.vehicle_id === v.id).map(h => ({ ...h, attachments: histAtt.filter(a => a.historial_id === h.id) })),
     }));
-    if(!state.activeId || (state.activeId !== ALL_PENDIENTES && !state.vehicles.some(v => v.id === state.activeId))){
+    const isSpecialView = state.activeId === ALL_PENDIENTES || state.activeId === PROVIDERS_VIEW;
+    if(!state.activeId || (!isSpecialView && !state.vehicles.some(v => v.id === state.activeId))){
       state.activeId = state.vehicles[0]?.id || null;
     }
     setStatus('');
@@ -492,7 +541,10 @@ function renderTabs(){
   const allTab = state.vehicles.length ? `
     <button type="button" class="vehicle-tab all-pend-tab${state.activeId === ALL_PENDIENTES ? ' active' : ''}" data-vid="${ALL_PENDIENTES}">☑ Todos los pendientes${totalOpen ? ` (${totalOpen})` : ''}</button>
   ` : '';
-  tabsEl.innerHTML = allTab + state.vehicles.map(v => `
+  const providersTab = `
+    <button type="button" class="vehicle-tab all-pend-tab${state.activeId === PROVIDERS_VIEW ? ' active' : ''}" data-vid="${PROVIDERS_VIEW}">🔧 Proveedores${state.providers.length ? ` (${state.providers.length})` : ''}</button>
+  `;
+  tabsEl.innerHTML = allTab + providersTab + state.vehicles.map(v => `
     <button type="button" class="vehicle-tab${v.id === state.activeId ? ' active' : ''}" data-vid="${v.id}">${esc(v.name)}</button>
   `).join('');
 }
@@ -550,6 +602,7 @@ function renderHistorial(h, vehicleName, vehicleUnit){
 
 function renderPanels(){
   if(state.activeId === ALL_PENDIENTES){ renderAllPendientesPanel(); return; }
+  if(state.activeId === PROVIDERS_VIEW){ renderProvidersPanel(); return; }
   const v = state.vehicles.find(x => x.id === state.activeId);
   if(!v){
     panelsEl.innerHTML = '<p class="empty-state">Agrega tu primer vehículo para empezar.</p>';
@@ -662,6 +715,49 @@ function renderAllPendientesPanel(){
         </div>
       `).join('')}
     </div>
+  `;
+}
+
+function renderProviderCard(p){
+  const phoneDigits = (p.phone || '').replace(/[^0-9+]/g, '');
+  const waDigits = (p.phone || '').replace(/[^0-9]/g, '');
+  return `
+  <div class="provider-card" data-provider-id="${p.id}">
+    <div class="provider-row">
+      <span class="provider-name" data-action="edit-provider-name" data-pid="${p.id}">${esc(p.name)}</span>
+      <span class="provider-category" data-action="edit-provider-category" data-pid="${p.id}">${p.category ? esc(p.category) : '<span class="ph">+ categoría</span>'}</span>
+      <button type="button" class="icon-btn delete-provider" data-pid="${p.id}" title="Eliminar">✕</button>
+    </div>
+    <div class="provider-meta">
+      <span class="provider-phone" data-action="edit-provider-phone" data-pid="${p.id}">${p.phone ? esc(p.phone) : '<span class="ph">+ teléfono</span>'}</span>
+      <span class="provider-address" data-action="edit-provider-address" data-pid="${p.id}">${p.address ? esc(p.address) : '<span class="ph">+ ubicación</span>'}</span>
+    </div>
+    <div class="provider-links">
+      ${phoneDigits ? `<a class="provider-link" href="tel:${esc(phoneDigits)}">📞 Llamar</a>` : ''}
+      ${waDigits ? `<a class="provider-link" href="https://wa.me/${esc(waDigits)}" target="_blank" rel="noopener">💬 WhatsApp</a>` : ''}
+      ${p.address ? `<a class="provider-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.address)}" target="_blank" rel="noopener">📍 Ver en Maps</a>` : ''}
+    </div>
+    <span class="provider-notes" data-action="edit-provider-notes" data-pid="${p.id}">${p.notes ? esc(p.notes) : '<span class="ph">+ notas (ej. horario, especialidad)</span>'}</span>
+  </div>`;
+}
+
+function renderProvidersPanel(){
+  panelsEl.innerHTML = `
+    <div class="vehicle-panel-header">
+      <span class="v-name">Proveedores y talleres</span>
+      <span class="v-last">${state.providers.length ? `${state.providers.length} registrado${state.providers.length === 1 ? '' : 's'}` : ''}</span>
+    </div>
+    ${state.providers.length ? `
+    <div class="provider-list">
+      ${state.providers.map(renderProviderCard).join('')}
+    </div>` : '<p class="empty-state">Aún no agregas ningún proveedor o taller.</p>'}
+    <form id="addProviderForm" class="add-provider-form">
+      <input class="provider-name-input" type="text" placeholder="Nombre (ej. Taller El Tuercas)" required>
+      <input class="provider-category-input" type="text" placeholder="Categoría (ej. Mecánico, Refaccionaria)">
+      <input class="provider-phone-input" type="tel" placeholder="Teléfono">
+      <input class="provider-address-input" type="text" placeholder="Dirección / ubicación">
+      <button class="btn-ghost" type="submit">Añadir</button>
+    </form>
   `;
 }
 
@@ -850,6 +946,7 @@ function findInfoRow(id){
   return null;
 }
 function findVehicle(id){ return state.vehicles.find(v => v.id === id); }
+function findProvider(id){ return state.providers.find(p => p.id === id); }
 
 function handleEditableSpan(el){
   if(el.querySelector('input')) return;
@@ -901,6 +998,26 @@ function handleEditableSpan(el){
     const vid = el.dataset.vid; const v = findVehicle(vid);
     value = v.odometer_unit || 'km';
     onSave = async val => { await supabase.from('vehicles').update({ odometer_unit: val || 'km' }).eq('id', vid); };
+  } else if(action === 'edit-provider-name'){
+    const pid = el.dataset.pid; const p = findProvider(pid);
+    value = p.name;
+    onSave = async val => { if(val) await supabase.from('providers').update({ name: val }).eq('id', pid); };
+  } else if(action === 'edit-provider-category'){
+    const pid = el.dataset.pid; const p = findProvider(pid);
+    value = p.category;
+    onSave = async val => { await supabase.from('providers').update({ category: val }).eq('id', pid); };
+  } else if(action === 'edit-provider-phone'){
+    const pid = el.dataset.pid; const p = findProvider(pid);
+    value = p.phone;
+    onSave = async val => { await supabase.from('providers').update({ phone: val }).eq('id', pid); };
+  } else if(action === 'edit-provider-address'){
+    const pid = el.dataset.pid; const p = findProvider(pid);
+    value = p.address;
+    onSave = async val => { await supabase.from('providers').update({ address: val }).eq('id', pid); };
+  } else if(action === 'edit-provider-notes'){
+    const pid = el.dataset.pid; const p = findProvider(pid);
+    value = p.notes;
+    onSave = async val => { await supabase.from('providers').update({ notes: val }).eq('id', pid); };
   } else return;
 
   const input = document.createElement('input');
@@ -1005,6 +1122,14 @@ document.addEventListener('click', async e => {
   if(delLog){
     const id = delLog.closest('.log-entry').dataset.histId;
     await supabase.from('historial').delete().eq('id', id);
+    loadAll();
+    return;
+  }
+
+  const delProvider = e.target.closest('.delete-provider');
+  if(delProvider){
+    if(!confirm('¿Eliminar este proveedor/taller?')) return;
+    await supabase.from('providers').delete().eq('id', delProvider.dataset.pid);
     loadAll();
     return;
   }
@@ -1119,6 +1244,20 @@ document.addEventListener('submit', async e => {
     loadAll();
     return;
   }
+
+  if(form.id === 'addProviderForm'){
+    const name = form.querySelector('.provider-name-input').value.trim();
+    const category = form.querySelector('.provider-category-input').value.trim();
+    const phone = form.querySelector('.provider-phone-input').value.trim();
+    const address = form.querySelector('.provider-address-input').value.trim();
+    if(!name) return;
+    await supabase.from('providers').insert({
+      name, category, phone, address, sort_order: state.providers.length,
+    });
+    form.reset();
+    loadAll();
+    return;
+  }
 });
 
 document.addEventListener('keydown', e => {
@@ -1127,7 +1266,7 @@ document.addEventListener('keydown', e => {
 
 // --- realtime: any change from any device reloads this view -----------
 function subscribeRealtime(){
-  const tables = ['vehicles', 'vehicle_info', 'vehicle_photos', 'pendientes', 'pendiente_attachments', 'historial', 'historial_attachments'];
+  const tables = ['vehicles', 'vehicle_info', 'vehicle_photos', 'pendientes', 'pendiente_attachments', 'historial', 'historial_attachments', 'providers'];
   const channel = supabase.channel('bitacora-changes');
   tables.forEach(t => {
     channel.on('postgres_changes', { event: '*', schema: 'public', table: t }, () => scheduleReload());
