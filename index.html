@@ -949,17 +949,31 @@ async function compressImage(file, maxDim = 1600, quality = 0.82){
 async function uploadAttachment(file, folder){
   const isImage = file.type.startsWith('image/');
   const isPdf = file.type === 'application/pdf';
-  if(!isImage && !isPdf){ alert('Solo se aceptan imágenes o PDF'); return null; }
-  let blob = file, ext = 'pdf', contentType = 'application/pdf';
-  if(isImage){
-    blob = await compressImage(file);
-    ext = 'jpg'; contentType = 'image/jpeg';
+  const isHeic = /\.(heic|heif)$/i.test(file.name || '') || /heic|heif/i.test(file.type || '');
+  if(isHeic){
+    alert('Este archivo parece estar en formato HEIC (común en fotos de iPhone), que el navegador no puede procesar. Expórtalo como JPG o PNG desde Fotos y vuelve a intentarlo.');
+    return null;
   }
-  const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-  const { error } = await supabase.storage.from('bitacora').upload(path, blob, { contentType, upsert: false });
-  if(error){ console.error(error); alert('No se pudo subir el archivo'); return null; }
-  const { data } = supabase.storage.from('bitacora').getPublicUrl(path);
-  return { url: data.publicUrl, kind: isImage ? 'image' : 'pdf', name: file.name };
+  if(!isImage && !isPdf){ alert('Solo se aceptan imágenes o PDF'); return null; }
+  setStatus('Subiendo archivo…');
+  try{
+    let blob = file, ext = 'pdf', contentType = 'application/pdf';
+    if(isImage){
+      blob = await compressImage(file);
+      ext = 'jpg'; contentType = 'image/jpeg';
+    }
+    const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage.from('bitacora').upload(path, blob, { contentType, upsert: false });
+    if(error){ console.error(error); alert('No se pudo subir el archivo. Revisa tu conexión e intenta de nuevo.'); return null; }
+    const { data } = supabase.storage.from('bitacora').getPublicUrl(path);
+    return { url: data.publicUrl, kind: isImage ? 'image' : 'pdf', name: file.name };
+  }catch(err){
+    console.error('Error al subir archivo', err);
+    alert('No se pudo procesar este archivo. Si es una foto, intenta exportarla como JPG o PNG primero e inténtalo de nuevo.');
+    return null;
+  }finally{
+    setStatus('');
+  }
 }
 
 function imageUrlToDataUrl(url){
@@ -1228,6 +1242,15 @@ function handleEditableSpan(el){
 
 // --- events ------------------------------------------------------------
 document.addEventListener('click', async e => {
+  try{
+    await handleClick(e);
+  }catch(err){
+    console.error('Error inesperado', err);
+    alert('Ocurrió un error inesperado. Revisa tu conexión e intenta de nuevo.');
+  }
+});
+
+async function handleClick(e){
   if(e.target === lightbox){ closeLightbox(); return; }
   const thumbImg = e.target.closest('.photo-thumb') && e.target.tagName === 'IMG' ? e.target : null;
   if(thumbImg){ openLightboxImage(thumbImg.dataset.full || thumbImg.src); return; }
@@ -1344,9 +1367,18 @@ document.addEventListener('click', async e => {
     loadAll();
     return;
   }
-});
+}
 
 document.addEventListener('change', async e => {
+  try{
+    await handleChange(e);
+  }catch(err){
+    console.error('Error inesperado', err);
+    alert('Ocurrió un error inesperado. Revisa tu conexión e intenta de nuevo.');
+  }
+});
+
+async function handleChange(e){
   const t = e.target;
   if(t.classList.contains('vehicle-photo-input')){
     const file = t.files[0]; if(!file) return;
@@ -1405,10 +1437,19 @@ document.addEventListener('change', async e => {
     if(!isNaN(months) && dateInput.value) reminderInput.value = addMonths(dateInput.value, months);
     return;
   }
-});
+}
 
 document.addEventListener('submit', async e => {
   e.preventDefault();
+  try{
+    await handleSubmit(e);
+  }catch(err){
+    console.error('Error inesperado', err);
+    alert('Ocurrió un error inesperado. Revisa tu conexión e intenta de nuevo.');
+  }
+});
+
+async function handleSubmit(e){
   const form = e.target;
 
   if(form.id === 'addVehicleForm'){
@@ -1501,7 +1542,7 @@ document.addEventListener('submit', async e => {
     loadAll();
     return;
   }
-});
+}
 
 document.addEventListener('keydown', e => {
   if(e.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox();
