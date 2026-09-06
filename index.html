@@ -316,6 +316,66 @@
   .add-provider-form .provider-phone-input{ width:135px; }
   .add-provider-form .provider-address-input{ flex:1; min-width:160px; }
 
+  .provider-services{ margin-top:.6rem; }
+  .provider-services-title{
+    font-family:'Bebas Neue', sans-serif; font-size:.7rem; letter-spacing:.05em;
+    text-transform:uppercase; color:var(--muted); margin-bottom:.3rem;
+  }
+  .provider-services-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.3rem; }
+  .provider-service-item{
+    display:flex; gap:.6rem; flex-wrap:wrap; align-items:baseline; font-size:.82rem;
+    border-top:1px solid var(--line); padding-top:.3rem;
+  }
+  .provider-service-vehicle{ font-weight:600; cursor:pointer; }
+  .provider-service-vehicle:hover{ color:var(--accent); }
+  .provider-service-date{ color:var(--muted); font-family:'Bebas Neue', sans-serif; font-size:.74rem; }
+  .provider-service-desc{ flex:1; min-width:120px; }
+  .provider-service-cost{ color:var(--accent); font-family:'Bebas Neue', sans-serif; font-size:.78rem; }
+
+  .v-subsection{ margin-top:1.75rem; }
+
+  .doc-list{ display:flex; flex-direction:column; gap:.4rem; margin-bottom:.6rem; }
+  .doc-row{
+    display:flex; align-items:center; gap:.6rem; background:var(--panel);
+    border:1px solid var(--line); border-radius:6px; padding:.5rem .75rem; flex-wrap:wrap;
+  }
+  .doc-name{ font-size:.92rem; cursor:text; border-radius:2px; min-width:140px; }
+  .doc-name:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
+  .doc-expiry{
+    font-family:'Bebas Neue', sans-serif; font-size:.78rem; color:var(--muted);
+    cursor:text; border-radius:2px; margin-left:auto; white-space:nowrap;
+  }
+  .doc-expiry:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
+  .doc-expiry.reminder-soon{ color:var(--accent); }
+  .doc-expiry.reminder-overdue{ color:var(--danger); }
+  .doc-file{ display:flex; align-items:center; gap:.3rem; }
+  .doc-file button{
+    background:transparent; border:none; color:var(--muted); padding:.15rem .3rem;
+    cursor:pointer; font-family:inherit; line-height:1; display:flex; align-items:center;
+  }
+  .doc-file button:hover{ color:var(--accent); }
+  .doc-file svg{ width:1rem; height:1rem; }
+
+  .add-doc-form{
+    display:flex; gap:.5rem; flex-wrap:wrap; align-items:center;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:6px; padding:.55rem .7rem;
+  }
+  .add-doc-form input{
+    background:var(--panel); color:var(--text); border:1px solid var(--line);
+    border-radius:5px; padding:.5rem .65rem; font-family:inherit; font-size:.85rem;
+  }
+  .add-doc-form .doc-name-input{ flex:1; min-width:160px; }
+  .add-doc-form .doc-expiry-input{ width:150px; }
+
+  .diagram-list{ display:flex; flex-wrap:wrap; gap:.9rem; margin:.75rem 0; }
+  .diagram-item{ display:flex; flex-direction:column; align-items:center; gap:.3rem; width:76px; }
+  .diagram-item .file-chip{ width:100%; }
+  .diagram-name{
+    font-size:.7rem; color:var(--muted); text-align:center; cursor:text; border-radius:2px;
+    max-width:76px; overflow-wrap:break-word;
+  }
+  .diagram-name:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
+
   .file-chip{
     display:flex; align-items:center; gap:.4rem; background:var(--panel-2);
     border:1px solid var(--line); border-radius:6px; padding:.35rem .5rem .35rem .7rem;
@@ -365,6 +425,7 @@
 </div>
 
 <div id="lightbox"></div>
+<datalist id="providersDatalist"></datalist>
 
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -460,6 +521,12 @@ function collectGlobalReminders(){
         items.push({ vehicleId: v.id, vehicleName: v.name, hist: h, rem });
       }
     }
+    for(const d of (v.documents || [])){
+      const rem = reminderStatus(d.expiry_date);
+      if(rem && (rem.cls === 'reminder-overdue' || rem.cls === 'reminder-soon')){
+        items.push({ vehicleId: v.id, vehicleName: v.name, hist: { description: `📄 ${d.name}`, reminder_date: d.expiry_date }, rem });
+      }
+    }
   }
   items.sort((a, b) => (a.hist.reminder_date < b.hist.reminder_date ? -1 : 1));
   return items;
@@ -492,14 +559,18 @@ async function loadAll(){
     if(ve) throw ve;
     const ids = (vehicles || []).map(v => v.id);
     const empty = { data: [] };
-    const [infoR, photosR, pendR, histR, providersR] = await Promise.all([
+    const [infoR, photosR, pendR, histR, providersR, docsR, diagramsR] = await Promise.all([
       ids.length ? supabase.from('vehicle_info').select('*').in('vehicle_id', ids).order('sort_order') : Promise.resolve(empty),
       ids.length ? supabase.from('vehicle_photos').select('*').in('vehicle_id', ids).order('created_at') : Promise.resolve(empty),
       ids.length ? supabase.from('pendientes').select('*').in('vehicle_id', ids).order('sort_order') : Promise.resolve(empty),
       ids.length ? supabase.from('historial').select('*').in('vehicle_id', ids).order('service_date', { ascending: false }) : Promise.resolve(empty),
       supabase.from('providers').select('*').order('sort_order'),
+      ids.length ? supabase.from('vehicle_documents').select('*').in('vehicle_id', ids).order('created_at') : Promise.resolve(empty),
+      ids.length ? supabase.from('vehicle_diagrams').select('*').in('vehicle_id', ids).order('created_at') : Promise.resolve(empty),
     ]);
     state.providers = providersR.data || [];
+    const documents = docsR.data || [];
+    const diagrams = diagramsR.data || [];
 
     const pend = pendR.data || [];
     const hist = histR.data || [];
@@ -520,6 +591,8 @@ async function loadAll(){
       photos: photos.filter(p => p.vehicle_id === v.id),
       pendientes: pend.filter(p => p.vehicle_id === v.id).map(p => ({ ...p, attachments: pendAtt.filter(a => a.pendiente_id === p.id) })),
       historial: hist.filter(h => h.vehicle_id === v.id).map(h => ({ ...h, attachments: histAtt.filter(a => a.historial_id === h.id) })),
+      documents: documents.filter(d => d.vehicle_id === v.id),
+      diagrams: diagrams.filter(d => d.vehicle_id === v.id),
     }));
     const isSpecialView = state.activeId === ALL_PENDIENTES || state.activeId === PROVIDERS_VIEW;
     if(!state.activeId || (!isSpecialView && !state.vehicles.some(v => v.id === state.activeId))){
@@ -534,7 +607,12 @@ async function loadAll(){
 }
 
 // --- rendering ---------------------------------------------------------
-function render(){ renderTabs(); renderPanels(); renderGlobalReminders(); }
+function render(){ renderTabs(); renderPanels(); renderGlobalReminders(); renderProvidersDatalist(); }
+
+function renderProvidersDatalist(){
+  const dl = document.getElementById('providersDatalist');
+  if(dl) dl.innerHTML = state.providers.map(p => `<option value="${esc(p.name)}">`).join('');
+}
 
 function renderTabs(){
   const totalOpen = state.vehicles.reduce((sum, v) => sum + v.pendientes.filter(p => !p.checked).length, 0);
@@ -651,6 +729,45 @@ function renderPanels(){
         <button type="button" class="btn-ghost add-vehicle-photo" data-vid="${v.id}">+ Agregar foto</button>
         <input type="file" accept="image/*" class="vehicle-photo-input" data-vid="${v.id}" hidden>
       </div>
+
+      <div class="v-subsection">
+        <h3>Documentos importantes</h3>
+        <div class="doc-list">
+          ${v.documents.map(d => `
+            <div class="doc-row" data-doc-id="${d.id}">
+              <span class="doc-name" data-action="edit-doc-name" data-doc-id="${d.id}">${esc(d.name)}</span>
+              <span class="doc-expiry ${d.expiry_date ? (reminderStatus(d.expiry_date)?.cls || '') : ''}" data-action="edit-doc-expiry" data-doc-id="${d.id}">${d.expiry_date ? esc(reminderStatus(d.expiry_date).label) : '<span class="ph">+ vencimiento</span>'}</span>
+              <div class="doc-file">
+                ${d.file_url ? `<a class="file-chip-link" href="${d.file_url}" target="_blank" rel="noopener">${esc(d.file_name || 'archivo')}</a>` : ''}
+                <button type="button" class="doc-attach-btn" data-doc-id="${d.id}" title="Adjuntar archivo">${ATTACH_SVG}</button>
+                <input type="file" accept="image/*,.pdf" class="doc-attach-input" data-doc-id="${d.id}" hidden>
+                <button type="button" class="icon-btn delete-doc" data-doc-id="${d.id}" title="Eliminar">✕</button>
+              </div>
+            </div>`).join('')}
+        </div>
+        <form class="add-doc-form" data-vid="${v.id}">
+          <input class="doc-name-input" type="text" placeholder="Documento (ej. Póliza de seguro)" required>
+          <input class="doc-expiry-input" type="date" title="Fecha de vencimiento (opcional)">
+          <button class="btn-ghost" type="submit">Añadir</button>
+        </form>
+      </div>
+
+      <div class="v-subsection">
+        <h3>Diagramas técnicos</h3>
+        <div class="diagram-list">
+          ${v.diagrams.map(d => `
+            <div class="diagram-item" data-diagram-id="${d.id}">
+              ${d.kind === 'image'
+                ? `<div class="photo-thumb"><img src="${d.url}" data-full="${d.url}"><button type="button" class="diagram-remove" data-diagram-id="${d.id}" title="Eliminar">✕</button></div>`
+                : `<div class="file-chip"><a class="file-chip-link" href="${d.url}" target="_blank" rel="noopener">📄</a><button type="button" class="diagram-remove" data-diagram-id="${d.id}" title="Eliminar">✕</button></div>`}
+              <span class="diagram-name" data-action="edit-diagram-name" data-diagram-id="${d.id}">${esc(d.name || 'Diagrama')}</span>
+            </div>`).join('')}
+        </div>
+        <div class="photo-actions">
+          <button type="button" class="btn-ghost add-vehicle-diagram" data-vid="${v.id}">+ Agregar diagrama</button>
+          <input type="file" accept="image/*,.pdf" class="vehicle-diagram-input" data-vid="${v.id}" hidden>
+        </div>
+      </div>
     </div>
 
     <div class="v-body">
@@ -670,7 +787,7 @@ function renderPanels(){
         <form class="add-log-form" data-vid="${v.id}">
           <input class="log-date-input" type="date" required>
           <input class="log-desc-input" type="text" placeholder="¿Qué se hizo?" required>
-          <input class="log-provider-input" type="text" placeholder="Proveedor">
+          <input class="log-provider-input" type="text" placeholder="Proveedor" list="providersDatalist">
           <input class="log-cost-input" type="text" inputmode="decimal" placeholder="Costo">
           <input class="log-odometer-input" type="text" inputmode="decimal" placeholder="Lectura (${esc(unit)})">
           <label class="mini-field"><span>Repetir</span>
@@ -721,6 +838,7 @@ function renderAllPendientesPanel(){
 function renderProviderCard(p){
   const phoneDigits = (p.phone || '').replace(/[^0-9+]/g, '');
   const waDigits = (p.phone || '').replace(/[^0-9]/g, '');
+  const services = findServicesForProvider(p.name);
   return `
   <div class="provider-card" data-provider-id="${p.id}">
     <div class="provider-row">
@@ -738,6 +856,19 @@ function renderProviderCard(p){
       ${p.address ? `<a class="provider-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.address)}" target="_blank" rel="noopener">📍 Ver en Maps</a>` : ''}
     </div>
     <span class="provider-notes" data-action="edit-provider-notes" data-pid="${p.id}">${p.notes ? esc(p.notes) : '<span class="ph">+ notas (ej. horario, especialidad)</span>'}</span>
+    ${services.length ? `
+    <div class="provider-services">
+      <div class="provider-services-title">Servicios registrados (${services.length})</div>
+      <ul class="provider-services-list">
+        ${services.map(s => `
+          <li class="provider-service-item">
+            <span class="provider-service-vehicle" data-action="jump-vehicle" data-vid="${s.vehicleId}" title="Ir a ${esc(s.vehicleName)}">${esc(s.vehicleName)}</span>
+            <span class="provider-service-date">${fmtDate(s.h.service_date)}</span>
+            <span class="provider-service-desc">${esc(s.h.description)}</span>
+            ${s.h.cost != null ? `<span class="provider-service-cost">${esc(fmtCost(s.h.cost))}</span>` : ''}
+          </li>`).join('')}
+      </ul>
+    </div>` : ''}
   </div>`;
 }
 
@@ -874,6 +1005,11 @@ async function exportVehiclePDF(vid){
     else line('Sin información registrada.');
     y += 3;
 
+    heading('Documentos importantes');
+    if(v.documents.length) v.documents.forEach(d => line(`${d.name}${d.expiry_date ? ` — vence ${fmtDate(d.expiry_date)}` : ''}`));
+    else line('Sin documentos registrados.');
+    y += 3;
+
     heading('Pendientes');
     if(v.pendientes.length) v.pendientes.forEach(p => line(`${p.checked ? '[x]' : '[ ]'} ${p.text}`));
     else line('Sin pendientes.');
@@ -902,6 +1038,7 @@ async function exportVehiclePDF(vid){
       ...v.photos.map(p => ({ url: p.url, caption: 'Foto del vehículo' })),
       ...v.pendientes.flatMap(p => p.attachments.filter(a => a.kind === 'image').map(a => ({ url: a.url, caption: `Pendiente: ${p.text}` }))),
       ...v.historial.flatMap(h => h.attachments.filter(a => a.kind === 'image').map(a => ({ url: a.url, caption: `${fmtDate(h.service_date)} — ${h.description}` }))),
+      ...v.diagrams.filter(d => d.kind === 'image').map(d => ({ url: d.url, caption: `Diagrama: ${d.name || 'sin nombre'}` })),
     ];
     if(photoItems.length){
       doc.addPage(); y = 18;
@@ -947,6 +1084,28 @@ function findInfoRow(id){
 }
 function findVehicle(id){ return state.vehicles.find(v => v.id === id); }
 function findProvider(id){ return state.providers.find(p => p.id === id); }
+function findDocument(id){
+  for(const v of state.vehicles){ const d = v.documents.find(x => x.id === id); if(d) return d; }
+  return null;
+}
+function findDiagram(id){
+  for(const v of state.vehicles){ const d = v.diagrams.find(x => x.id === id); if(d) return d; }
+  return null;
+}
+function findServicesForProvider(name){
+  const nameLower = (name || '').trim().toLowerCase();
+  if(!nameLower) return [];
+  const results = [];
+  for(const v of state.vehicles){
+    for(const h of v.historial){
+      if((h.provider || '').trim().toLowerCase() === nameLower){
+        results.push({ vehicleId: v.id, vehicleName: v.name, h });
+      }
+    }
+  }
+  results.sort((a, b) => (a.h.service_date < b.h.service_date ? 1 : -1));
+  return results;
+}
 
 function handleEditableSpan(el){
   if(el.querySelector('input')) return;
@@ -1018,10 +1177,22 @@ function handleEditableSpan(el){
     const pid = el.dataset.pid; const p = findProvider(pid);
     value = p.notes;
     onSave = async val => { await supabase.from('providers').update({ notes: val }).eq('id', pid); };
+  } else if(action === 'edit-doc-name'){
+    const id = el.dataset.docId; const d = findDocument(id);
+    value = d.name;
+    onSave = async val => { if(val) await supabase.from('vehicle_documents').update({ name: val }).eq('id', id); };
+  } else if(action === 'edit-doc-expiry'){
+    const id = el.dataset.docId; const d = findDocument(id);
+    value = d.expiry_date || '';
+    onSave = async val => { await supabase.from('vehicle_documents').update({ expiry_date: val || null }).eq('id', id); };
+  } else if(action === 'edit-diagram-name'){
+    const id = el.dataset.diagramId; const d = findDiagram(id);
+    value = d.name || '';
+    onSave = async val => { await supabase.from('vehicle_diagrams').update({ name: val || null }).eq('id', id); };
   } else return;
 
   const input = document.createElement('input');
-  input.type = action === 'edit-hist-reminder' ? 'date' : 'text';
+  input.type = (action === 'edit-hist-reminder' || action === 'edit-doc-expiry') ? 'date' : 'text';
   input.value = value || '';
   input.className = 'inline-edit-input';
   el.replaceWith(input);
@@ -1133,6 +1304,26 @@ document.addEventListener('click', async e => {
     loadAll();
     return;
   }
+
+  const docAttachBtn = e.target.closest('.doc-attach-btn');
+  if(docAttachBtn){ docAttachBtn.parentElement.querySelector('.doc-attach-input').click(); return; }
+
+  const delDoc = e.target.closest('.delete-doc');
+  if(delDoc){
+    await supabase.from('vehicle_documents').delete().eq('id', delDoc.dataset.docId);
+    loadAll();
+    return;
+  }
+
+  const addDiagramBtn = e.target.closest('.add-vehicle-diagram');
+  if(addDiagramBtn){ addDiagramBtn.parentElement.querySelector('.vehicle-diagram-input').click(); return; }
+
+  const rmDiagram = e.target.closest('.diagram-remove');
+  if(rmDiagram){
+    await supabase.from('vehicle_diagrams').delete().eq('id', rmDiagram.dataset.diagramId);
+    loadAll();
+    return;
+  }
 });
 
 document.addEventListener('change', async e => {
@@ -1161,6 +1352,26 @@ document.addEventListener('change', async e => {
   if(t.matches('.check-item input[type="checkbox"]')){
     const id = t.closest('.check-item').dataset.pendId;
     await supabase.from('pendientes').update({ checked: t.checked }).eq('id', id);
+    loadAll();
+    return;
+  }
+  if(t.classList.contains('doc-attach-input')){
+    const file = t.files[0]; if(!file) return;
+    const docId = t.dataset.docId;
+    const att = await uploadAttachment(file, `vehicle-documents/${docId}`);
+    t.value = '';
+    if(!att) return;
+    await supabase.from('vehicle_documents').update({ file_url: att.url, file_name: att.name }).eq('id', docId);
+    loadAll();
+    return;
+  }
+  if(t.classList.contains('vehicle-diagram-input')){
+    const file = t.files[0]; if(!file) return;
+    const vid = t.dataset.vid;
+    const att = await uploadAttachment(file, `vehicle-diagrams/${vid}`);
+    t.value = '';
+    if(!att) return;
+    await supabase.from('vehicle_diagrams').insert({ vehicle_id: vid, name: att.name, url: att.url, kind: att.kind });
     loadAll();
     return;
   }
@@ -1245,6 +1456,17 @@ document.addEventListener('submit', async e => {
     return;
   }
 
+  if(form.classList.contains('add-doc-form')){
+    const vid = form.dataset.vid;
+    const name = form.querySelector('.doc-name-input').value.trim();
+    const expiry = form.querySelector('.doc-expiry-input').value;
+    if(!name) return;
+    await supabase.from('vehicle_documents').insert({ vehicle_id: vid, name, expiry_date: expiry || null });
+    form.reset();
+    loadAll();
+    return;
+  }
+
   if(form.id === 'addProviderForm'){
     const name = form.querySelector('.provider-name-input').value.trim();
     const category = form.querySelector('.provider-category-input').value.trim();
@@ -1266,7 +1488,7 @@ document.addEventListener('keydown', e => {
 
 // --- realtime: any change from any device reloads this view -----------
 function subscribeRealtime(){
-  const tables = ['vehicles', 'vehicle_info', 'vehicle_photos', 'pendientes', 'pendiente_attachments', 'historial', 'historial_attachments', 'providers'];
+  const tables = ['vehicles', 'vehicle_info', 'vehicle_photos', 'pendientes', 'pendiente_attachments', 'historial', 'historial_attachments', 'providers', 'vehicle_documents', 'vehicle_diagrams'];
   const channel = supabase.channel('bitacora-changes');
   tables.forEach(t => {
     channel.on('postgres_changes', { event: '*', schema: 'public', table: t }, () => scheduleReload());
