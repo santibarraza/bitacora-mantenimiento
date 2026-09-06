@@ -153,10 +153,20 @@
     font-family:'Bebas Neue', sans-serif; font-size:.76rem; color:var(--muted);
     min-width:90px; text-transform:uppercase; letter-spacing:.04em;
   }
-  .info-value{ flex:1; font-size:.92rem; cursor:text; border-radius:2px; }
-  .info-value:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
+  .info-value{ flex:1; font-size:.92rem; border-radius:2px; }
+  .info-value[data-action]{ cursor:text; }
+  .info-value[data-action]:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
   .ph{ color:var(--muted); font-style:italic; }
   .delete-info{ font-size:.85rem; }
+
+  .v-info-header{ display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-bottom:.75rem; }
+  .v-info-header h3{ margin:0; }
+  .icon-btn.edit-info-toggle{
+    font-family:'Bebas Neue', sans-serif; font-size:.7rem; letter-spacing:.05em;
+    text-transform:uppercase; border:1px solid var(--line); border-radius:999px; padding:.3rem .7rem;
+  }
+  .icon-btn.edit-info-toggle:hover{ color:var(--accent); border-color:var(--accent); }
+  .icon-btn.edit-info-toggle.active{ color:var(--accent); border-color:var(--accent); }
 
   .add-info-form, .add-check-form, .add-log-form{
     display:flex; gap:.5rem; flex-wrap:wrap; align-items:center;
@@ -437,7 +447,7 @@ const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov'
 const ALL_PENDIENTES = '__all_pendientes__';
 const PROVIDERS_VIEW = '__providers__';
 
-let state = { vehicles: [], providers: [], activeId: null };
+let state = { vehicles: [], providers: [], activeId: null, infoEditMode: false };
 
 const statusLine = document.getElementById('statusLine');
 const tabsEl = document.getElementById('vehicleTabs');
@@ -689,6 +699,7 @@ function renderPanels(){
   const lastService = v.historial.length ? v.historial[0].service_date : null;
   const stats = costStats(v.historial);
   const unit = v.odometer_unit || 'km';
+  const editMode = state.infoEditMode;
   panelsEl.innerHTML = `
     <div class="vehicle-panel-header">
       <span class="v-name" data-action="edit-vehicle-name" data-vid="${v.id}" title="Click para renombrar">${esc(v.name)}</span>
@@ -708,27 +719,32 @@ function renderPanels(){
     </div>
 
     <div class="v-info">
-      <h3>Información general</h3>
+      <div class="v-info-header">
+        <h3>Información general</h3>
+        <button type="button" class="icon-btn edit-info-toggle${editMode ? ' active' : ''}" data-vid="${v.id}" title="${editMode ? 'Terminar edición' : 'Editar información y fotos'}">${editMode ? '✓ Listo' : '✎ Editar'}</button>
+      </div>
       <div class="info-fields">
         ${v.info.map(row => `
           <div class="info-row">
             <span class="info-label">${esc(row.label)}</span>
-            <span class="info-value" data-action="edit-info-value" data-info-id="${row.id}">${row.value ? esc(row.value) : '<span class="ph">—</span>'}</span>
-            <button type="button" class="icon-btn delete-info" data-info-id="${row.id}" title="Eliminar">✕</button>
+            <span class="info-value"${editMode ? ` data-action="edit-info-value" data-info-id="${row.id}"` : ''}>${row.value ? esc(row.value) : '<span class="ph">—</span>'}</span>
+            ${editMode ? `<button type="button" class="icon-btn delete-info" data-info-id="${row.id}" title="Eliminar">✕</button>` : ''}
           </div>`).join('')}
       </div>
+      ${editMode ? `
       <form class="add-info-form" data-vid="${v.id}">
         <input class="info-label-input" type="text" placeholder="Campo (ej. Placas)" required>
         <input class="info-value-input" type="text" placeholder="Valor">
         <button class="btn-ghost" type="submit">Añadir</button>
-      </form>
+      </form>` : ''}
       <div class="vehicle-photos">
-        ${v.photos.map(p => `<div class="photo-thumb" data-photo-id="${p.id}"><img src="${p.url}" data-full="${p.url}"><button type="button" class="photo-remove" data-photo-id="${p.id}" title="Eliminar">✕</button></div>`).join('')}
+        ${v.photos.map(p => `<div class="photo-thumb" data-photo-id="${p.id}"><img src="${p.url}" data-full="${p.url}">${editMode ? `<button type="button" class="photo-remove" data-photo-id="${p.id}" title="Eliminar">✕</button>` : ''}</div>`).join('')}
       </div>
+      ${editMode ? `
       <div class="photo-actions">
         <button type="button" class="btn-ghost add-vehicle-photo" data-vid="${v.id}">+ Agregar foto</button>
         <input type="file" accept="image/*" class="vehicle-photo-input" data-vid="${v.id}" hidden>
-      </div>
+      </div>` : ''}
 
       <div class="v-subsection">
         <h3>Documentos importantes</h3>
@@ -1217,10 +1233,10 @@ document.addEventListener('click', async e => {
   if(thumbImg){ openLightboxImage(thumbImg.dataset.full || thumbImg.src); return; }
 
   const tab = e.target.closest('.vehicle-tab');
-  if(tab){ state.activeId = tab.dataset.vid; render(); return; }
+  if(tab){ state.activeId = tab.dataset.vid; state.infoEditMode = false; render(); return; }
 
   const gremind = e.target.closest('.global-reminder-pill');
-  if(gremind){ state.activeId = gremind.dataset.vid; render(); return; }
+  if(gremind){ state.activeId = gremind.dataset.vid; state.infoEditMode = false; render(); return; }
 
   if(e.target.id === 'addVehicleBtn'){
     const form = document.getElementById('addVehicleForm');
@@ -1231,7 +1247,10 @@ document.addEventListener('click', async e => {
   }
 
   const jumpVehicle = e.target.closest('[data-action="jump-vehicle"]');
-  if(jumpVehicle){ state.activeId = jumpVehicle.dataset.vid; render(); return; }
+  if(jumpVehicle){ state.activeId = jumpVehicle.dataset.vid; state.infoEditMode = false; render(); return; }
+
+  const infoEditToggle = e.target.closest('.edit-info-toggle');
+  if(infoEditToggle){ state.infoEditMode = !state.infoEditMode; render(); return; }
 
   const pdfBtn = e.target.closest('.export-pdf-btn');
   if(pdfBtn){ exportVehiclePDF(pdfBtn.dataset.vid); return; }
@@ -1244,6 +1263,7 @@ document.addEventListener('click', async e => {
     if(!confirm('¿Eliminar este vehículo y todo su historial? No se puede deshacer.')) return;
     await supabase.from('vehicles').delete().eq('id', delVehicle.dataset.vid);
     state.activeId = null;
+    state.infoEditMode = false;
     loadAll();
     return;
   }
@@ -1400,6 +1420,7 @@ document.addEventListener('submit', async e => {
     document.getElementById('addVehicleBtn').setAttribute('aria-expanded', 'false');
     if(error){ alert('No se pudo crear el vehículo'); return; }
     state.activeId = data.id;
+    state.infoEditMode = false;
     loadAll();
     return;
   }
