@@ -34,7 +34,7 @@
   *{box-sizing:border-box;}
   body{
     margin:0; background:var(--bg); color:var(--text);
-    font-family:'Bebas Neue', ui-sans-serif, system-ui, sans-serif;
+    font-family:'Roboto', ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing:antialiased;
     padding:2.5rem 1.25rem 5rem;
   }
@@ -49,11 +49,11 @@
   }
   .brand-logo{ display:block; height:44px; width:auto; margin-bottom:.4rem; border-radius:6px; align-self:flex-start; }
   .eyebrow{
-    font-family:'Bebas Neue', sans-serif; font-size:.72rem;
+    font-family:'Roboto', sans-serif; font-size:.72rem;
     letter-spacing:.14em; text-transform:uppercase; color:var(--accent);
   }
   h1{
-    font-family:'Roboto', sans-serif; font-weight:600;
+    font-family:'Bebas Neue', sans-serif; font-weight:600;
     font-size:clamp(1.9rem, 5vw, 2.6rem); letter-spacing:.01em;
     margin:0; text-wrap:balance;
   }
@@ -62,12 +62,12 @@
   .global-reminders{ margin-bottom:1.25rem; }
   .global-reminders:empty{ margin:0; }
   .global-reminders-summary{
-    font-family:'Bebas Neue', sans-serif; font-size:.82rem; letter-spacing:.03em;
+    font-family:'Roboto', sans-serif; font-size:.82rem; letter-spacing:.03em;
     color:var(--danger); margin-bottom:.5rem;
   }
   .global-reminders-list{ display:flex; flex-wrap:wrap; gap:.5rem; }
   .global-reminder-pill{
-    font-family:'Bebas Neue', sans-serif; font-size:.74rem; letter-spacing:.02em;
+    font-family:'Roboto', sans-serif; font-size:.74rem; letter-spacing:.02em;
     background:var(--panel); border:1px solid var(--line); color:var(--muted);
     border-radius:999px; padding:.4rem .85rem; cursor:pointer; text-align:left;
   }
@@ -78,7 +78,7 @@
   .vehicle-tabs-row{ display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; margin-bottom:.75rem; }
   .vehicle-tabs{ display:flex; flex-wrap:wrap; gap:.5rem; }
   .vehicle-tab{
-    font-family:'Bebas Neue', sans-serif; font-size:.78rem; letter-spacing:.03em;
+    font-family:'Roboto', sans-serif; font-size:.78rem; letter-spacing:.03em;
     background:var(--panel); border:1px solid var(--line); color:var(--muted);
     padding:.5rem 1rem; border-radius:999px; cursor:pointer;
   }
@@ -86,12 +86,29 @@
   .vehicle-tab.active{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
 
   .add-vehicle-btn{
-    font-family:'Bebas Neue', sans-serif; font-size:1rem; line-height:1;
+    font-family:'Roboto', sans-serif; font-size:1rem; line-height:1;
     background:transparent; border:1px dashed var(--line); color:var(--muted);
     width:2.1rem; height:2.1rem; min-width:2.1rem; border-radius:50%; cursor:pointer;
     display:flex; align-items:center; justify-content:center; padding:0;
   }
   .add-vehicle-btn:hover{ border-color:var(--accent); color:var(--accent); }
+
+  .global-views-row{
+    display:flex; flex-wrap:wrap; align-items:center; gap:.6rem;
+    margin-bottom:1.1rem; padding-bottom:1.1rem; border-bottom:1px solid var(--line);
+  }
+  .global-views-label{
+    font-family:'Roboto', sans-serif; font-size:.68rem; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--muted); white-space:nowrap;
+  }
+  .global-view-tabs{ display:flex; flex-wrap:wrap; gap:.5rem; }
+  .global-view-tab{
+    font-family:'Roboto', sans-serif; font-size:.74rem; letter-spacing:.03em;
+    background:transparent; border:1px solid var(--line); color:var(--muted);
+    padding:.4rem .85rem; border-radius:999px; cursor:pointer;
+  }
+  .global-view-tab:hover{ color:var(--text); border-color:var(--accent); }
+  .global-view-tab.active{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
   .add-vehicle-btn[aria-expanded="true"]{ border-style:solid; color:var(--accent); border-color:var(--accent); }
   .add-vehicle-form{
     display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1.5rem;
@@ -111,19 +128,19 @@
     margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:1px solid var(--line);
   }
   .v-name{
-    font-family:'Roboto', sans-serif; font-weight:600; font-size:1.4rem;
+    font-family:'Bebas Neue', sans-serif; font-weight:600; font-size:1.4rem;
     cursor:text; outline-offset:3px; border-radius:2px;
   }
   .v-name:hover{ outline:1px dashed var(--muted); }
   .v-type{
-    font-family:'Bebas Neue', sans-serif; font-size:.72rem; letter-spacing:.08em;
+    font-family:'Roboto', sans-serif; font-size:.72rem; letter-spacing:.08em;
     text-transform:uppercase; color:var(--muted); background:var(--panel);
     border:1px solid var(--line); border-radius:999px; padding:.25rem .6rem;
   }
   .v-last{ font-size:.85rem; color:var(--muted); margin-left:auto; }
   .v-stats{ display:flex; flex-wrap:wrap; gap:.5rem; margin:-.75rem 0 1.25rem; }
   .stat-chip{
-    font-family:'Bebas Neue', sans-serif; font-size:.78rem; color:var(--muted);
+    font-family:'Roboto', sans-serif; font-size:.78rem; color:var(--muted);
     background:var(--panel); border:1px solid var(--line); border-radius:999px;
     padding:.35rem .75rem; letter-spacing:.02em;
   }
@@ -141,7 +158,7 @@
 
   .v-info{ margin-bottom:1.75rem; }
   .v-info h3, .v-col h3{
-    font-family:'Roboto', sans-serif; font-weight:500; font-size:1rem;
+    font-family:'Bebas Neue', sans-serif; font-weight:500; font-size:1rem;
     letter-spacing:.02em; text-transform:uppercase; margin:0 0 .75rem;
   }
   .info-fields{ display:flex; flex-direction:column; gap:.4rem; margin-bottom:.6rem; }
@@ -150,7 +167,7 @@
     border:1px solid var(--line); border-radius:6px; padding:.5rem .75rem;
   }
   .info-label{
-    font-family:'Bebas Neue', sans-serif; font-size:.76rem; color:var(--muted);
+    font-family:'Roboto', sans-serif; font-size:.76rem; color:var(--muted);
     min-width:90px; text-transform:uppercase; letter-spacing:.04em;
   }
   .info-value{ flex:1; font-size:.92rem; border-radius:2px; }
@@ -162,7 +179,7 @@
   .v-info-header{ display:flex; align-items:center; justify-content:space-between; gap:.6rem; margin-bottom:.75rem; }
   .v-info-header h3{ margin:0; }
   .icon-btn.edit-info-toggle{
-    font-family:'Bebas Neue', sans-serif; font-size:.7rem; letter-spacing:.05em;
+    font-family:'Roboto', sans-serif; font-size:.7rem; letter-spacing:.05em;
     text-transform:uppercase; border:1px solid var(--line); border-radius:999px; padding:.3rem .7rem;
   }
   .icon-btn.edit-info-toggle:hover{ color:var(--accent); border-color:var(--accent); }
@@ -186,14 +203,14 @@
   .add-log-form .log-cost-input{ width:100px; }
   .add-log-form .mini-field{ display:flex; flex-direction:column; gap:.2rem; }
   .add-log-form .mini-field span{
-    font-family:'Bebas Neue', sans-serif; font-size:.62rem; letter-spacing:.05em;
+    font-family:'Roboto', sans-serif; font-size:.62rem; letter-spacing:.05em;
     text-transform:uppercase; color:var(--muted);
   }
   .add-log-form .log-reminder-input{ width:135px; }
   .add-log-form .log-repeat-select{ width:110px; }
   .add-log-form .log-odometer-input{ width:110px; }
   .btn-ghost{
-    font-family:'Bebas Neue', sans-serif; font-size:.74rem; letter-spacing:.05em;
+    font-family:'Roboto', sans-serif; font-size:.74rem; letter-spacing:.05em;
     text-transform:uppercase; background:transparent; border:1px solid var(--line);
     color:var(--muted); padding:.5rem .8rem; border-radius:5px; cursor:pointer;
   }
@@ -221,7 +238,7 @@
   .all-pend-tab.active{ border-style:solid; }
   .all-pend-groups{ display:flex; flex-direction:column; gap:1.5rem; }
   .all-pend-vehicle{
-    font-family:'Roboto', sans-serif; font-weight:500; font-size:1rem;
+    font-family:'Bebas Neue', sans-serif; font-weight:500; font-size:1rem;
     letter-spacing:.02em; margin:0 0 .6rem; cursor:pointer; display:inline-block;
   }
   .all-pend-vehicle:hover{ color:var(--accent); }
@@ -251,7 +268,7 @@
   .check-tools button:hover{ color:var(--accent); }
   .check-tools svg{ width:1rem; height:1rem; }
   .pend-priority-select{
-    font-family:'Bebas Neue', sans-serif; font-size:.68rem; letter-spacing:.04em;
+    font-family:'Roboto', sans-serif; font-size:.68rem; letter-spacing:.04em;
     text-transform:uppercase; background:var(--panel-2); color:var(--muted);
     border:1px solid var(--line); border-radius:999px; padding:.2rem .55rem; cursor:pointer;
   }
@@ -265,13 +282,13 @@
   .log-list{ list-style:none; margin:0 0 .75rem; padding:0; display:flex; flex-direction:column; gap:.6rem; }
   .log-entry{ background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:.75rem .9rem; }
   .log-row{ display:flex; gap:.75rem; align-items:flex-start; }
-  .log-date{ font-family:'Bebas Neue', sans-serif; font-size:.74rem; color:var(--muted); white-space:nowrap; margin-top:.15rem; }
+  .log-date{ font-family:'Roboto', sans-serif; font-size:.74rem; color:var(--muted); white-space:nowrap; margin-top:.15rem; }
   .log-fields{ flex:1; min-width:0; }
   .log-desc{ display:block; font-size:.92rem; line-height:1.45; cursor:text; border-radius:2px; }
   .log-desc:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
   .log-meta{ display:flex; gap:.75rem; margin-top:.35rem; flex-wrap:wrap; }
   .log-provider, .log-cost, .log-reminder, .log-odometer{
-    font-family:'Bebas Neue', sans-serif; font-size:.76rem; color:var(--muted);
+    font-family:'Roboto', sans-serif; font-size:.76rem; color:var(--muted);
     cursor:text; border-radius:2px;
   }
   .log-cost{ color:var(--accent); }
@@ -279,7 +296,7 @@
   .log-reminder.reminder-soon{ color:var(--accent); }
   .log-reminder.reminder-overdue{ color:var(--danger); }
   .log-gcal{
-    font-family:'Bebas Neue', sans-serif; font-size:.72rem; color:var(--muted);
+    font-family:'Roboto', sans-serif; font-size:.72rem; color:var(--muted);
     text-decoration:none; border:1px solid var(--line); border-radius:999px;
     padding:.15rem .55rem; white-space:nowrap;
   }
@@ -296,12 +313,12 @@
   .provider-card{ background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:.75rem .9rem; }
   .provider-row{ display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
   .provider-name{
-    font-family:'Roboto', sans-serif; font-weight:500; font-size:.98rem;
+    font-family:'Bebas Neue', sans-serif; font-weight:500; font-size:.98rem;
     cursor:text; border-radius:2px; margin-right:auto;
   }
   .provider-name:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
   .provider-category{
-    font-family:'Bebas Neue', sans-serif; font-size:.74rem; color:var(--accent);
+    font-family:'Roboto', sans-serif; font-size:.74rem; color:var(--accent);
     text-transform:uppercase; letter-spacing:.04em; cursor:text;
     border:1px solid var(--line); border-radius:999px; padding:.15rem .55rem;
   }
@@ -313,7 +330,7 @@
   .provider-phone:hover, .provider-address:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
   .provider-links{ display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.6rem; }
   .provider-link{
-    font-family:'Bebas Neue', sans-serif; font-size:.72rem; letter-spacing:.04em;
+    font-family:'Roboto', sans-serif; font-size:.72rem; letter-spacing:.04em;
     text-transform:uppercase; color:var(--text); text-decoration:none;
     border:1px solid var(--line); border-radius:999px; padding:.3rem .7rem;
   }
@@ -339,7 +356,7 @@
 
   .provider-services{ margin-top:.6rem; }
   .provider-services-title{
-    font-family:'Bebas Neue', sans-serif; font-size:.7rem; letter-spacing:.05em;
+    font-family:'Roboto', sans-serif; font-size:.7rem; letter-spacing:.05em;
     text-transform:uppercase; color:var(--muted); margin-bottom:.3rem;
   }
   .provider-services-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.3rem; }
@@ -349,9 +366,9 @@
   }
   .provider-service-vehicle{ font-weight:600; cursor:pointer; }
   .provider-service-vehicle:hover{ color:var(--accent); }
-  .provider-service-date{ color:var(--muted); font-family:'Bebas Neue', sans-serif; font-size:.74rem; }
+  .provider-service-date{ color:var(--muted); font-family:'Roboto', sans-serif; font-size:.74rem; }
   .provider-service-desc{ flex:1; min-width:120px; }
-  .provider-service-cost{ color:var(--accent); font-family:'Bebas Neue', sans-serif; font-size:.78rem; }
+  .provider-service-cost{ color:var(--accent); font-family:'Roboto', sans-serif; font-size:.78rem; }
 
   .v-subsection{ margin-top:1.75rem; }
 
@@ -363,7 +380,7 @@
   .doc-name{ font-size:.92rem; cursor:text; border-radius:2px; min-width:140px; }
   .doc-name:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
   .doc-expiry{
-    font-family:'Bebas Neue', sans-serif; font-size:.78rem; color:var(--muted);
+    font-family:'Roboto', sans-serif; font-size:.78rem; color:var(--muted);
     cursor:text; border-radius:2px; margin-left:auto; white-space:nowrap;
   }
   .doc-expiry:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
@@ -399,19 +416,19 @@
 
   .techref-groups{ display:flex; flex-direction:column; gap:1.5rem; margin-bottom:1rem; }
   .techref-category{
-    font-family:'Roboto', sans-serif; font-weight:500; font-size:.95rem;
+    font-family:'Bebas Neue', sans-serif; font-weight:500; font-size:.95rem;
     letter-spacing:.02em; text-transform:uppercase; margin:0 0 .6rem; color:var(--accent);
   }
   .techref-list{ display:flex; flex-direction:column; gap:.6rem; }
   .techref-card{ background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:.75rem .9rem; }
   .techref-row{ display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
   .techref-title{
-    font-family:'Roboto', sans-serif; font-weight:500; font-size:.95rem;
+    font-family:'Bebas Neue', sans-serif; font-weight:500; font-size:.95rem;
     cursor:text; border-radius:2px; margin-right:auto;
   }
   .techref-title:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
   .techref-vehicle{
-    font-family:'Bebas Neue', sans-serif; font-size:.7rem; color:var(--muted);
+    font-family:'Roboto', sans-serif; font-size:.7rem; color:var(--muted);
     text-transform:uppercase; letter-spacing:.04em; border:1px solid var(--line);
     border-radius:999px; padding:.15rem .55rem;
   }
@@ -469,6 +486,11 @@
 
   <div id="globalReminders" class="global-reminders"></div>
 
+  <div class="global-views-row">
+    <span class="global-views-label">General</span>
+    <nav id="globalViewTabs" class="global-view-tabs"></nav>
+  </div>
+
   <div class="vehicle-tabs-row">
     <nav id="vehicleTabs" class="vehicle-tabs"></nav>
     <button id="addVehicleBtn" class="add-vehicle-btn" type="button" title="Agregar vehículo" aria-expanded="false">+</button>
@@ -504,6 +526,7 @@ let state = { vehicles: [], providers: [], generalPendientes: [], techReference:
 
 const statusLine = document.getElementById('statusLine');
 const tabsEl = document.getElementById('vehicleTabs');
+const globalViewTabsEl = document.getElementById('globalViewTabs');
 const panelsEl = document.getElementById('vehiclePanels');
 const lightbox = document.getElementById('lightbox');
 const globalRemindersEl = document.getElementById('globalReminders');
@@ -692,18 +715,19 @@ function renderTabs(){
   const totalOpen = state.vehicles.reduce((sum, v) => sum + v.pendientes.filter(p => !p.checked).length, 0);
   const generalOpen = state.generalPendientes.filter(p => !p.checked).length;
   const allTab = state.vehicles.length ? `
-    <button type="button" class="vehicle-tab all-pend-tab${state.activeId === ALL_PENDIENTES ? ' active' : ''}" data-vid="${ALL_PENDIENTES}">☑ Todos los pendientes${totalOpen ? ` (${totalOpen})` : ''}</button>
+    <button type="button" class="global-view-tab${state.activeId === ALL_PENDIENTES ? ' active' : ''}" data-vid="${ALL_PENDIENTES}">☑ Todos los pendientes${totalOpen ? ` (${totalOpen})` : ''}</button>
   ` : '';
   const generalPendTab = `
-    <button type="button" class="vehicle-tab all-pend-tab${state.activeId === GENERAL_PENDIENTES_VIEW ? ' active' : ''}" data-vid="${GENERAL_PENDIENTES_VIEW}">🗒️ Pendientes generales${generalOpen ? ` (${generalOpen})` : ''}</button>
+    <button type="button" class="global-view-tab${state.activeId === GENERAL_PENDIENTES_VIEW ? ' active' : ''}" data-vid="${GENERAL_PENDIENTES_VIEW}">🗒️ Pendientes generales${generalOpen ? ` (${generalOpen})` : ''}</button>
   `;
   const techRefTab = `
-    <button type="button" class="vehicle-tab all-pend-tab${state.activeId === TECH_REF_VIEW ? ' active' : ''}" data-vid="${TECH_REF_VIEW}">📚 Info técnica${state.techReference.length ? ` (${state.techReference.length})` : ''}</button>
+    <button type="button" class="global-view-tab${state.activeId === TECH_REF_VIEW ? ' active' : ''}" data-vid="${TECH_REF_VIEW}">📚 Info técnica${state.techReference.length ? ` (${state.techReference.length})` : ''}</button>
   `;
   const providersTab = `
-    <button type="button" class="vehicle-tab all-pend-tab${state.activeId === PROVIDERS_VIEW ? ' active' : ''}" data-vid="${PROVIDERS_VIEW}">🔧 Proveedores${state.providers.length ? ` (${state.providers.length})` : ''}</button>
+    <button type="button" class="global-view-tab${state.activeId === PROVIDERS_VIEW ? ' active' : ''}" data-vid="${PROVIDERS_VIEW}">🔧 Proveedores${state.providers.length ? ` (${state.providers.length})` : ''}</button>
   `;
-  tabsEl.innerHTML = allTab + generalPendTab + techRefTab + providersTab + state.vehicles.map(v => `
+  globalViewTabsEl.innerHTML = allTab + generalPendTab + techRefTab + providersTab;
+  tabsEl.innerHTML = state.vehicles.map(v => `
     <button type="button" class="vehicle-tab${v.id === state.activeId ? ' active' : ''}" data-vid="${v.id}">${esc(v.name)}</button>
   `).join('');
 }
@@ -1415,7 +1439,7 @@ async function handleClick(e){
   const thumbImg = e.target.closest('.photo-thumb') && e.target.tagName === 'IMG' ? e.target : null;
   if(thumbImg){ openLightboxImage(thumbImg.dataset.full || thumbImg.src); return; }
 
-  const tab = e.target.closest('.vehicle-tab');
+  const tab = e.target.closest('.vehicle-tab, .global-view-tab');
   if(tab){ state.activeId = tab.dataset.vid; state.infoEditMode = false; render(); return; }
 
   const gremind = e.target.closest('.global-reminder-pill');
