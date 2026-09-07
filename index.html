@@ -104,6 +104,7 @@
   }
 
   .home-general-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:.7rem; }
+  .home-vehicles-grid{ display:grid; grid-template-columns:minmax(180px, 260px); gap:.7rem; }
   .home-nav-card{
     display:flex; flex-direction:column; gap:.35rem; text-align:left;
     background:var(--panel); border:1px solid var(--line); border-radius:8px;
@@ -556,11 +557,12 @@ const supabase = createClient('https://jfivdvkhifqhirrqhcfl.supabase.co', 'sb_pu
 const ATTACH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 12.5l6.5-6.5a3 3 0 1 1 4.24 4.24L10.5 18.5a5 5 0 1 1-7.07-7.07L12 3"/></svg>';
 const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const HOME_VIEW = '__home__';
+const VEHICLES_VIEW = '__vehicles__';
 const ALL_PENDIENTES = '__all_pendientes__';
 const PROVIDERS_VIEW = '__providers__';
 const GENERAL_PENDIENTES_VIEW = '__general_pendientes__';
 const TECH_REF_VIEW = '__tech_reference__';
-const SPECIAL_VIEWS = [HOME_VIEW, ALL_PENDIENTES, PROVIDERS_VIEW, GENERAL_PENDIENTES_VIEW, TECH_REF_VIEW];
+const SPECIAL_VIEWS = [HOME_VIEW, VEHICLES_VIEW, ALL_PENDIENTES, PROVIDERS_VIEW, GENERAL_PENDIENTES_VIEW, TECH_REF_VIEW];
 const PRIORITY_LABELS = { alta: 'Alta', media: 'Media', baja: 'Baja' };
 
 let state = { vehicles: [], providers: [], generalPendientes: [], techReference: [], activeId: null, infoEditMode: false, showAddVehicleForm: false };
@@ -875,25 +877,15 @@ function renderHomePanel(){
     </div>
   `;
 
-  const vehicleCards = state.vehicles.length ? `
-    <div class="home-vehicle-grid">
-      ${state.vehicles.map(v => {
-        const openCount = v.pendientes.filter(p => !p.checked).length;
-        const lastService = v.historial.length ? v.historial[0].service_date : null;
-        return `
-        <div class="home-vehicle-card" data-action="jump-vehicle" data-vid="${v.id}">
-          <div class="home-vehicle-card-top">
-            <span class="home-vehicle-name">${esc(v.name)}</span>
-            ${v.type ? `<span class="home-vehicle-type">${esc(v.type)}</span>` : ''}
-          </div>
-          <div class="home-vehicle-meta">
-            ${openCount ? `<span class="warn">${openCount} pendiente${openCount === 1 ? '' : 's'}</span>` : '<span>Sin pendientes</span>'}
-            ${lastService ? `<span>Último servicio: ${fmtDate(lastService)}</span>` : ''}
-          </div>
-        </div>`;
-      }).join('')}
+  const vehiclesCard = `
+    <div class="home-vehicles-grid">
+      <button type="button" class="home-nav-card" data-vid="${VEHICLES_VIEW}">
+        <span class="home-nav-card-icon">🚗</span>
+        <span class="home-nav-card-title">Vehículos</span>
+        <span class="home-nav-card-stat">${state.vehicles.length ? `${state.vehicles.length} vehículo${state.vehicles.length === 1 ? '' : 's'}` : 'Agregar el primero'}</span>
+      </button>
     </div>
-  ` : '<p class="empty-state">Agrega tu primer vehículo con el botón "+" de arriba.</p>';
+  `;
 
   const remindersSection = reminders.length ? `
     <div class="home-section">
@@ -945,24 +937,52 @@ function renderHomePanel(){
     ${prioritySection}
     ${activitySection}
     <div class="home-section">
-      <div class="home-section-header">
-        <h3 class="home-section-title">Tus vehículos</h3>
-        <button type="button" id="addVehicleBtn" class="add-vehicle-btn" title="Agregar vehículo" aria-expanded="${state.showAddVehicleForm}">+</button>
-      </div>
-      ${state.showAddVehicleForm ? `
-      <form id="addVehicleForm" class="add-vehicle-form">
-        <input id="newVehicleName" type="text" placeholder="Nombre (ej. Lancha)" required>
-        <input id="newVehicleType" type="text" placeholder="Tipo (ej. Auto, Moto)">
-        <button class="btn-ghost" type="submit">Crear</button>
-      </form>` : ''}
-      ${vehicleCards}
+      <h3 class="home-section-title">Tus vehículos</h3>
+      ${vehiclesCard}
     </div>
+  `;
+}
+
+function renderVehiclesListPanel(){
+  const vehicleCards = state.vehicles.length ? `
+    <div class="home-vehicle-grid">
+      ${state.vehicles.map(v => {
+        const openCount = v.pendientes.filter(p => !p.checked).length;
+        const lastService = v.historial.length ? v.historial[0].service_date : null;
+        return `
+        <div class="home-vehicle-card" data-action="jump-vehicle" data-vid="${v.id}">
+          <div class="home-vehicle-card-top">
+            <span class="home-vehicle-name">${esc(v.name)}</span>
+            ${v.type ? `<span class="home-vehicle-type">${esc(v.type)}</span>` : ''}
+          </div>
+          <div class="home-vehicle-meta">
+            ${openCount ? `<span class="warn">${openCount} pendiente${openCount === 1 ? '' : 's'}</span>` : '<span>Sin pendientes</span>'}
+            ${lastService ? `<span>Último servicio: ${fmtDate(lastService)}</span>` : ''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  ` : '<p class="empty-state">Agrega tu primer vehículo con el botón "+" de arriba.</p>';
+
+  panelsEl.innerHTML = `
+    <div class="vehicle-panel-header home-section-header">
+      <span class="v-name">Vehículos</span>
+      <button type="button" id="addVehicleBtn" class="add-vehicle-btn" title="Agregar vehículo" aria-expanded="${state.showAddVehicleForm}">+</button>
+    </div>
+    ${state.showAddVehicleForm ? `
+    <form id="addVehicleForm" class="add-vehicle-form">
+      <input id="newVehicleName" type="text" placeholder="Nombre (ej. Lancha)" required>
+      <input id="newVehicleType" type="text" placeholder="Tipo (ej. Auto, Moto)">
+      <button class="btn-ghost" type="submit">Crear</button>
+    </form>` : ''}
+    ${vehicleCards}
   `;
   if(state.showAddVehicleForm) document.getElementById('newVehicleName')?.focus();
 }
 
 function renderPanels(){
   if(state.activeId === HOME_VIEW){ renderHomePanel(); return; }
+  if(state.activeId === VEHICLES_VIEW){ renderVehiclesListPanel(); return; }
   if(state.activeId === ALL_PENDIENTES){ renderAllPendientesPanel(); return; }
   if(state.activeId === PROVIDERS_VIEW){ renderProvidersPanel(); return; }
   if(state.activeId === GENERAL_PENDIENTES_VIEW){ renderGeneralPendientesPanel(); return; }
