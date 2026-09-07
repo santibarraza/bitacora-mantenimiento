@@ -4,6 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bitácora de Mantenimiento</title>
+
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#11242b">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bitácora">
+
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Bebas+Neue&display=swap');
 
@@ -104,7 +115,6 @@
   }
 
   .home-general-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:.7rem; }
-  .home-vehicles-grid{ display:grid; grid-template-columns:minmax(180px, 260px); gap:.7rem; }
   .home-nav-card{
     display:flex; flex-direction:column; gap:.35rem; text-align:left;
     background:var(--panel); border:1px solid var(--line); border-radius:8px;
@@ -114,6 +124,8 @@
   .home-nav-card-icon{ font-size:1.3rem; line-height:1; }
   .home-nav-card-title{ font-family:'Bebas Neue', sans-serif; font-weight:600; font-size:.98rem; }
   .home-nav-card-stat{ font-size:.78rem; color:var(--muted); }
+  .home-nav-card-primary{ border-color:var(--accent); background:var(--panel-2); }
+  .home-nav-card-primary .home-nav-card-title{ color:var(--accent); }
 
   .home-vehicle-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:.7rem; }
   .home-vehicle-card{
@@ -854,6 +866,11 @@ function renderHomePanel(){
 
   const generalCards = `
     <div class="home-general-grid">
+      <button type="button" class="home-nav-card home-nav-card-primary" data-vid="${VEHICLES_VIEW}">
+        <span class="home-nav-card-icon">🚗</span>
+        <span class="home-nav-card-title">Vehículos</span>
+        <span class="home-nav-card-stat">${state.vehicles.length ? `${state.vehicles.length} vehículo${state.vehicles.length === 1 ? '' : 's'}` : 'Agregar el primero'}</span>
+      </button>
       <button type="button" class="home-nav-card" data-vid="${ALL_PENDIENTES}">
         <span class="home-nav-card-icon">☑</span>
         <span class="home-nav-card-title">Todos los pendientes</span>
@@ -873,16 +890,6 @@ function renderHomePanel(){
         <span class="home-nav-card-icon">🔧</span>
         <span class="home-nav-card-title">Proveedores</span>
         <span class="home-nav-card-stat">${state.providers.length ? `${state.providers.length} registrados` : 'Vacío'}</span>
-      </button>
-    </div>
-  `;
-
-  const vehiclesCard = `
-    <div class="home-vehicles-grid">
-      <button type="button" class="home-nav-card" data-vid="${VEHICLES_VIEW}">
-        <span class="home-nav-card-icon">🚗</span>
-        <span class="home-nav-card-title">Vehículos</span>
-        <span class="home-nav-card-stat">${state.vehicles.length ? `${state.vehicles.length} vehículo${state.vehicles.length === 1 ? '' : 's'}` : 'Agregar el primero'}</span>
       </button>
     </div>
   `;
@@ -936,10 +943,6 @@ function renderHomePanel(){
     ${remindersSection}
     ${prioritySection}
     ${activitySection}
-    <div class="home-section">
-      <h3 class="home-section-title">Tus vehículos</h3>
-      ${vehiclesCard}
-    </div>
   `;
 }
 
@@ -1976,6 +1979,12 @@ function scheduleReload(){ clearTimeout(reloadTimer); reloadTimer = setTimeout(l
 
 loadAll();
 subscribeRealtime();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js').catch(err => console.error('No se pudo registrar el service worker', err));
+  });
+}
 </script>
 </body>
 </html>
