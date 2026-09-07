@@ -168,18 +168,18 @@
   .icon-btn.edit-info-toggle:hover{ color:var(--accent); border-color:var(--accent); }
   .icon-btn.edit-info-toggle.active{ color:var(--accent); border-color:var(--accent); }
 
-  .add-info-form, .add-check-form, .add-log-form{
+  .add-info-form, .add-check-form, .add-general-check-form, .add-log-form{
     display:flex; gap:.5rem; flex-wrap:wrap; align-items:center;
     background:var(--panel-2); border:1px solid var(--line); border-radius:6px; padding:.55rem .7rem;
   }
-  .add-info-form input, .add-check-form input, .add-log-form input,
+  .add-info-form input, .add-check-form input, .add-general-check-form input, .add-log-form input,
   .add-log-form select{
     background:var(--panel); color:var(--text); border:1px solid var(--line);
     border-radius:5px; padding:.5rem .65rem; font-family:inherit; font-size:.85rem;
   }
   .add-info-form .info-label-input{ width:130px; }
   .add-info-form .info-value-input{ flex:1; min-width:100px; }
-  .add-check-form .check-input{ flex:1; min-width:140px; }
+  .add-check-form .check-input, .add-general-check-form .check-input{ flex:1; min-width:140px; }
   .add-log-form .log-date-input{ width:135px; }
   .add-log-form .log-desc-input{ flex:1; min-width:160px; }
   .add-log-form .log-provider-input{ width:130px; }
@@ -240,13 +240,24 @@
   }
   .check-item span{ font-size:.92rem; line-height:1.45; }
   .check-item.checked span{ color:var(--muted); text-decoration:line-through; text-decoration-color:var(--line); }
-  .check-tools{ display:flex; gap:.3rem; align-items:center; margin-top:.4rem; margin-left:1.9rem; }
+  .check-item.priority-alta{ border-left:3px solid var(--danger); }
+  .check-item.priority-media{ border-left:3px solid var(--accent); }
+  .check-item.priority-baja{ border-left:3px solid var(--ok); }
+  .check-tools{ display:flex; gap:.4rem; align-items:center; margin-top:.4rem; margin-left:1.9rem; flex-wrap:wrap; }
   .check-tools button{
     background:transparent; border:none; color:var(--muted); padding:.15rem .3rem;
     cursor:pointer; font-family:inherit; line-height:1; display:flex; align-items:center;
   }
   .check-tools button:hover{ color:var(--accent); }
   .check-tools svg{ width:1rem; height:1rem; }
+  .pend-priority-select{
+    font-family:'Bebas Neue', sans-serif; font-size:.68rem; letter-spacing:.04em;
+    text-transform:uppercase; background:var(--panel-2); color:var(--muted);
+    border:1px solid var(--line); border-radius:999px; padding:.2rem .55rem; cursor:pointer;
+  }
+  .pend-priority-select.priority-alta{ color:var(--danger); border-color:var(--danger); }
+  .pend-priority-select.priority-media{ color:var(--accent); border-color:var(--accent); }
+  .pend-priority-select.priority-baja{ color:var(--ok); border-color:var(--ok); }
   .log-attachments{ display:flex; flex-wrap:wrap; gap:.5rem; margin:.5rem 0 0 1.9rem; }
   .log-attachments:empty{ margin:0; }
   .col-actions{ display:flex; justify-content:flex-end; margin-bottom:.75rem; }
@@ -386,6 +397,43 @@
   }
   .diagram-name:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
 
+  .techref-groups{ display:flex; flex-direction:column; gap:1.5rem; margin-bottom:1rem; }
+  .techref-category{
+    font-family:'Roboto', sans-serif; font-weight:500; font-size:.95rem;
+    letter-spacing:.02em; text-transform:uppercase; margin:0 0 .6rem; color:var(--accent);
+  }
+  .techref-list{ display:flex; flex-direction:column; gap:.6rem; }
+  .techref-card{ background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:.75rem .9rem; }
+  .techref-row{ display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+  .techref-title{
+    font-family:'Roboto', sans-serif; font-weight:500; font-size:.95rem;
+    cursor:text; border-radius:2px; margin-right:auto;
+  }
+  .techref-title:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
+  .techref-vehicle{
+    font-family:'Bebas Neue', sans-serif; font-size:.7rem; color:var(--muted);
+    text-transform:uppercase; letter-spacing:.04em; border:1px solid var(--line);
+    border-radius:999px; padding:.15rem .55rem;
+  }
+  .techref-content{
+    display:block; margin-top:.5rem; font-size:.88rem; line-height:1.5;
+    cursor:text; border-radius:2px; white-space:pre-line;
+  }
+  .techref-content:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
+
+  .add-techref-form{
+    display:flex; gap:.5rem; flex-wrap:wrap; align-items:flex-start;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:6px; padding:.55rem .7rem;
+  }
+  .add-techref-form input, .add-techref-form select, .add-techref-form textarea{
+    background:var(--panel); color:var(--text); border:1px solid var(--line);
+    border-radius:5px; padding:.5rem .65rem; font-family:inherit; font-size:.85rem;
+  }
+  .add-techref-form .techref-category-input{ width:170px; }
+  .add-techref-form .techref-title-input{ flex:1; min-width:160px; }
+  .add-techref-form .techref-vehicle-input{ width:170px; }
+  .add-techref-form .techref-content-input{ flex:1; min-width:200px; resize:vertical; font-family:inherit; }
+
   .file-chip{
     display:flex; align-items:center; gap:.4rem; background:var(--panel-2);
     border:1px solid var(--line); border-radius:6px; padding:.35rem .5rem .35rem .7rem;
@@ -436,6 +484,7 @@
 
 <div id="lightbox"></div>
 <datalist id="providersDatalist"></datalist>
+<datalist id="techCategoriesDatalist"></datalist>
 
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -446,8 +495,12 @@ const ATTACH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
 const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const ALL_PENDIENTES = '__all_pendientes__';
 const PROVIDERS_VIEW = '__providers__';
+const GENERAL_PENDIENTES_VIEW = '__general_pendientes__';
+const TECH_REF_VIEW = '__tech_reference__';
+const SPECIAL_VIEWS = [ALL_PENDIENTES, PROVIDERS_VIEW, GENERAL_PENDIENTES_VIEW, TECH_REF_VIEW];
+const PRIORITY_LABELS = { alta: 'Alta', media: 'Media', baja: 'Baja' };
 
-let state = { vehicles: [], providers: [], activeId: null, infoEditMode: false };
+let state = { vehicles: [], providers: [], generalPendientes: [], techReference: [], activeId: null, infoEditMode: false };
 
 const statusLine = document.getElementById('statusLine');
 const tabsEl = document.getElementById('vehicleTabs');
@@ -569,7 +622,7 @@ async function loadAll(){
     if(ve) throw ve;
     const ids = (vehicles || []).map(v => v.id);
     const empty = { data: [] };
-    const [infoR, photosR, pendR, histR, providersR, docsR, diagramsR] = await Promise.all([
+    const [infoR, photosR, pendR, histR, providersR, docsR, diagramsR, generalPendR, techRefR] = await Promise.all([
       ids.length ? supabase.from('vehicle_info').select('*').in('vehicle_id', ids).order('sort_order') : Promise.resolve(empty),
       ids.length ? supabase.from('vehicle_photos').select('*').in('vehicle_id', ids).order('created_at') : Promise.resolve(empty),
       ids.length ? supabase.from('pendientes').select('*').in('vehicle_id', ids).order('sort_order') : Promise.resolve(empty),
@@ -577,8 +630,12 @@ async function loadAll(){
       supabase.from('providers').select('*').order('sort_order'),
       ids.length ? supabase.from('vehicle_documents').select('*').in('vehicle_id', ids).order('created_at') : Promise.resolve(empty),
       ids.length ? supabase.from('vehicle_diagrams').select('*').in('vehicle_id', ids).order('created_at') : Promise.resolve(empty),
+      supabase.from('general_pendientes').select('*').order('sort_order'),
+      supabase.from('tech_reference').select('*').order('sort_order'),
     ]);
     state.providers = providersR.data || [];
+    state.generalPendientes = generalPendR.data || [];
+    state.techReference = techRefR.data || [];
     const documents = docsR.data || [];
     const diagrams = diagramsR.data || [];
 
@@ -604,7 +661,7 @@ async function loadAll(){
       documents: documents.filter(d => d.vehicle_id === v.id),
       diagrams: diagrams.filter(d => d.vehicle_id === v.id),
     }));
-    const isSpecialView = state.activeId === ALL_PENDIENTES || state.activeId === PROVIDERS_VIEW;
+    const isSpecialView = SPECIAL_VIEWS.includes(state.activeId);
     if(!state.activeId || (!isSpecialView && !state.vehicles.some(v => v.id === state.activeId))){
       state.activeId = state.vehicles[0]?.id || null;
     }
@@ -617,22 +674,36 @@ async function loadAll(){
 }
 
 // --- rendering ---------------------------------------------------------
-function render(){ renderTabs(); renderPanels(); renderGlobalReminders(); renderProvidersDatalist(); }
+function render(){ renderTabs(); renderPanels(); renderGlobalReminders(); renderProvidersDatalist(); renderTechCategoriesDatalist(); }
 
 function renderProvidersDatalist(){
   const dl = document.getElementById('providersDatalist');
   if(dl) dl.innerHTML = state.providers.map(p => `<option value="${esc(p.name)}">`).join('');
 }
 
+function renderTechCategoriesDatalist(){
+  const dl = document.getElementById('techCategoriesDatalist');
+  if(!dl) return;
+  const categories = [...new Set(state.techReference.map(t => (t.category || '').trim()).filter(Boolean))];
+  dl.innerHTML = categories.map(c => `<option value="${esc(c)}">`).join('');
+}
+
 function renderTabs(){
   const totalOpen = state.vehicles.reduce((sum, v) => sum + v.pendientes.filter(p => !p.checked).length, 0);
+  const generalOpen = state.generalPendientes.filter(p => !p.checked).length;
   const allTab = state.vehicles.length ? `
     <button type="button" class="vehicle-tab all-pend-tab${state.activeId === ALL_PENDIENTES ? ' active' : ''}" data-vid="${ALL_PENDIENTES}">☑ Todos los pendientes${totalOpen ? ` (${totalOpen})` : ''}</button>
   ` : '';
+  const generalPendTab = `
+    <button type="button" class="vehicle-tab all-pend-tab${state.activeId === GENERAL_PENDIENTES_VIEW ? ' active' : ''}" data-vid="${GENERAL_PENDIENTES_VIEW}">🗒️ Pendientes generales${generalOpen ? ` (${generalOpen})` : ''}</button>
+  `;
+  const techRefTab = `
+    <button type="button" class="vehicle-tab all-pend-tab${state.activeId === TECH_REF_VIEW ? ' active' : ''}" data-vid="${TECH_REF_VIEW}">📚 Info técnica${state.techReference.length ? ` (${state.techReference.length})` : ''}</button>
+  `;
   const providersTab = `
     <button type="button" class="vehicle-tab all-pend-tab${state.activeId === PROVIDERS_VIEW ? ' active' : ''}" data-vid="${PROVIDERS_VIEW}">🔧 Proveedores${state.providers.length ? ` (${state.providers.length})` : ''}</button>
   `;
-  tabsEl.innerHTML = allTab + providersTab + state.vehicles.map(v => `
+  tabsEl.innerHTML = allTab + generalPendTab + techRefTab + providersTab + state.vehicles.map(v => `
     <button type="button" class="vehicle-tab${v.id === state.activeId ? ' active' : ''}" data-vid="${v.id}">${esc(v.name)}</button>
   `).join('');
 }
@@ -645,19 +716,32 @@ function renderAttachment(a, ownerKind){
   return `<div class="file-chip"><a class="file-chip-link" href="${a.url}" target="_blank" rel="noopener">${esc(a.name || 'archivo.pdf')}</a>${delBtn}</div>`;
 }
 
-function renderPendiente(p){
+function priorityRank(p){
+  return p.priority === 'alta' ? 0 : p.priority === 'media' ? 1 : p.priority === 'baja' ? 2 : 3;
+}
+function sortByPriority(list){
+  return list.map((p, i) => ({ p, i })).sort((a, b) => (priorityRank(a.p) - priorityRank(b.p)) || (a.i - b.i)).map(x => x.p);
+}
+function priorityOptions(current){
+  const opts = [['', 'Sin prioridad'], ['alta', 'Alta'], ['media', 'Media'], ['baja', 'Baja']];
+  return opts.map(([val, label]) => `<option value="${val}"${(current || '') === val ? ' selected' : ''}>${label}</option>`).join('');
+}
+function renderPendiente(p, kind = 'vehicle'){
+  const prCls = p.priority ? ` priority-${p.priority}` : '';
   return `
-  <li class="check-item${p.checked ? ' checked' : ''}" data-pend-id="${p.id}">
+  <li class="check-item${p.checked ? ' checked' : ''}${prCls}" data-pend-id="${p.id}" data-kind="${kind}">
     <label>
       <input type="checkbox" ${p.checked ? 'checked' : ''}>
       <span>${esc(p.text)}</span>
     </label>
     <div class="check-tools">
+      <select class="pend-priority-select${prCls}" title="Prioridad">${priorityOptions(p.priority)}</select>
+      ${kind === 'vehicle' ? `
       <button type="button" class="log-attach-btn" data-kind="pend" data-id="${p.id}" title="Adjuntar foto o PDF">${ATTACH_SVG}</button>
-      <input type="file" accept="image/*,.pdf" class="log-attach-input" data-kind="pend" data-id="${p.id}" hidden>
+      <input type="file" accept="image/*,.pdf" class="log-attach-input" data-kind="pend" data-id="${p.id}" hidden>` : ''}
       <button type="button" class="delete-check" title="Eliminar">✕</button>
     </div>
-    <div class="log-attachments">${p.attachments.map(a => renderAttachment(a, 'pend')).join('')}</div>
+    ${kind === 'vehicle' ? `<div class="log-attachments">${p.attachments.map(a => renderAttachment(a, 'pend')).join('')}</div>` : ''}
   </li>`;
 }
 
@@ -691,6 +775,8 @@ function renderHistorial(h, vehicleName, vehicleUnit){
 function renderPanels(){
   if(state.activeId === ALL_PENDIENTES){ renderAllPendientesPanel(); return; }
   if(state.activeId === PROVIDERS_VIEW){ renderProvidersPanel(); return; }
+  if(state.activeId === GENERAL_PENDIENTES_VIEW){ renderGeneralPendientesPanel(); return; }
+  if(state.activeId === TECH_REF_VIEW){ renderTechReferencePanel(); return; }
   const v = state.vehicles.find(x => x.id === state.activeId);
   if(!v){
     panelsEl.innerHTML = '<p class="empty-state">Agrega tu primer vehículo para empezar.</p>';
@@ -789,7 +875,7 @@ function renderPanels(){
     <div class="v-body">
       <div class="v-col">
         <h3>Pendientes</h3>
-        <ul class="checklist">${v.pendientes.map(renderPendiente).join('')}</ul>
+        <ul class="checklist">${sortByPriority(v.pendientes).map(p => renderPendiente(p, 'vehicle')).join('')}</ul>
         <form class="add-check-form" data-vid="${v.id}">
           <input class="check-input" type="text" placeholder="Nuevo punto del checklist" required>
           <button class="btn-ghost" type="submit">Añadir</button>
@@ -844,10 +930,73 @@ function renderAllPendientesPanel(){
       ${groups.map(v => `
         <div class="all-pend-group">
           <h3 class="all-pend-vehicle" data-action="jump-vehicle" data-vid="${v.id}" title="Ir a ${esc(v.name)}">${esc(v.name)}</h3>
-          <ul class="checklist">${v.pendientes.map(renderPendiente).join('')}</ul>
+          <ul class="checklist">${sortByPriority(v.pendientes).map(p => renderPendiente(p, 'vehicle')).join('')}</ul>
         </div>
       `).join('')}
     </div>
+  `;
+}
+
+function renderGeneralPendientesPanel(){
+  const openCount = state.generalPendientes.filter(p => !p.checked).length;
+  panelsEl.innerHTML = `
+    <div class="vehicle-panel-header">
+      <span class="v-name">Pendientes generales</span>
+      <span class="v-last">${openCount} sin marcar</span>
+    </div>
+    ${state.generalPendientes.length ? `
+    <ul class="checklist">${sortByPriority(state.generalPendientes).map(p => renderPendiente(p, 'general')).join('')}</ul>
+    <div class="col-actions"><button type="button" class="btn-ghost reset-general-checklist">Reiniciar checklist</button></div>
+    ` : '<p class="empty-state">Aún no tienes pendientes generales.</p>'}
+    <form class="add-general-check-form">
+      <input class="check-input" type="text" placeholder="Nuevo pendiente general (no ligado a un vehículo)" required>
+      <button class="btn-ghost" type="submit">Añadir</button>
+    </form>
+  `;
+}
+
+function renderTechRefEntry(t){
+  const vehicleName = t.vehicle_id ? (findVehicle(t.vehicle_id)?.name || '') : '';
+  return `
+  <div class="techref-card" data-techref-id="${t.id}">
+    <div class="techref-row">
+      <span class="techref-title" data-action="edit-techref-title" data-techref-id="${t.id}">${esc(t.title)}</span>
+      ${vehicleName ? `<span class="techref-vehicle">${esc(vehicleName)}</span>` : ''}
+      <button type="button" class="icon-btn delete-techref" data-techref-id="${t.id}" title="Eliminar">✕</button>
+    </div>
+    <span class="techref-content" data-action="edit-techref-content" data-techref-id="${t.id}">${t.content ? esc(t.content).replace(/\n/g, '<br>') : '<span class="ph">+ detalle</span>'}</span>
+  </div>`;
+}
+
+function renderTechReferencePanel(){
+  const groups = {};
+  state.techReference.forEach(t => {
+    const cat = (t.category && t.category.trim()) ? t.category.trim() : 'Sin categoría';
+    (groups[cat] = groups[cat] || []).push(t);
+  });
+  const categories = Object.keys(groups).sort((a, b) => a.localeCompare(b, 'es'));
+  const vehicleOptions = state.vehicles.map(v => `<option value="${v.id}">${esc(v.name)}</option>`).join('');
+  panelsEl.innerHTML = `
+    <div class="vehicle-panel-header">
+      <span class="v-name">Información técnica</span>
+      <span class="v-last">${state.techReference.length ? `${state.techReference.length} registro${state.techReference.length === 1 ? '' : 's'}` : ''}</span>
+    </div>
+    ${categories.length ? `
+    <div class="techref-groups">
+      ${categories.map(cat => `
+        <div class="techref-group">
+          <h3 class="techref-category">${esc(cat)}</h3>
+          <div class="techref-list">${groups[cat].map(renderTechRefEntry).join('')}</div>
+        </div>
+      `).join('')}
+    </div>` : '<p class="empty-state">Aún no agregas información técnica.</p>'}
+    <form id="addTechRefForm" class="add-techref-form">
+      <input class="techref-category-input" type="text" placeholder="Categoría (ej. Aceites, Bujías, Cables)" list="techCategoriesDatalist" required>
+      <input class="techref-title-input" type="text" placeholder="Título (ej. Aceite de motor)" required>
+      <select class="techref-vehicle-input"><option value="">General (ningún vehículo)</option>${vehicleOptions}</select>
+      <textarea class="techref-content-input" placeholder="Detalle (ej. 10W-40, cambiar cada 100 hrs)" rows="2"></textarea>
+      <button class="btn-ghost" type="submit">Añadir</button>
+    </form>
   `;
 }
 
@@ -1122,6 +1271,7 @@ function findDiagram(id){
   for(const v of state.vehicles){ const d = v.diagrams.find(x => x.id === id); if(d) return d; }
   return null;
 }
+function findTechRef(id){ return state.techReference.find(t => t.id === id); }
 function findServicesForProvider(name){
   const nameLower = (name || '').trim().toLowerCase();
   if(!nameLower) return [];
@@ -1219,10 +1369,20 @@ function handleEditableSpan(el){
     const id = el.dataset.diagramId; const d = findDiagram(id);
     value = d.name || '';
     onSave = async val => { await supabase.from('vehicle_diagrams').update({ name: val || null }).eq('id', id); };
+  } else if(action === 'edit-techref-title'){
+    const id = el.dataset.techrefId; const t = findTechRef(id);
+    value = t.title;
+    onSave = async val => { if(val) await supabase.from('tech_reference').update({ title: val }).eq('id', id); };
+  } else if(action === 'edit-techref-content'){
+    const id = el.dataset.techrefId; const t = findTechRef(id);
+    value = t.content || '';
+    onSave = async val => { await supabase.from('tech_reference').update({ content: val || null }).eq('id', id); };
   } else return;
 
-  const input = document.createElement('input');
-  input.type = (action === 'edit-hist-reminder' || action === 'edit-doc-expiry') ? 'date' : 'text';
+  const isTextarea = action === 'edit-techref-content';
+  const input = document.createElement(isTextarea ? 'textarea' : 'input');
+  if(!isTextarea) input.type = (action === 'edit-hist-reminder' || action === 'edit-doc-expiry') ? 'date' : 'text';
+  else input.rows = 3;
   input.value = value || '';
   input.className = 'inline-edit-input';
   el.replaceWith(input);
@@ -1234,7 +1394,7 @@ function handleEditableSpan(el){
     loadAll();
   };
   input.addEventListener('keydown', ev => {
-    if(ev.key === 'Enter'){ ev.preventDefault(); finish(true); }
+    if(ev.key === 'Enter' && !isTextarea){ ev.preventDefault(); finish(true); }
     else if(ev.key === 'Escape'){ ev.preventDefault(); finish(false); }
   });
   input.addEventListener('blur', () => finish(true));
@@ -1319,8 +1479,9 @@ async function handleClick(e){
 
   const delCheck = e.target.closest('.delete-check');
   if(delCheck){
-    const id = delCheck.closest('.check-item').dataset.pendId;
-    await supabase.from('pendientes').delete().eq('id', id);
+    const item = delCheck.closest('.check-item');
+    const table = item.dataset.kind === 'general' ? 'general_pendientes' : 'pendientes';
+    await supabase.from(table).delete().eq('id', item.dataset.pendId);
     loadAll();
     return;
   }
@@ -1328,6 +1489,20 @@ async function handleClick(e){
   const resetBtn = e.target.closest('.reset-checklist');
   if(resetBtn){
     await supabase.from('pendientes').update({ checked: false }).eq('vehicle_id', resetBtn.dataset.vid);
+    loadAll();
+    return;
+  }
+
+  const resetGeneralBtn = e.target.closest('.reset-general-checklist');
+  if(resetGeneralBtn){
+    await supabase.from('general_pendientes').update({ checked: false }).not('id', 'is', null);
+    loadAll();
+    return;
+  }
+
+  const delTechRef = e.target.closest('.delete-techref');
+  if(delTechRef){
+    await supabase.from('tech_reference').delete().eq('id', delTechRef.dataset.techrefId);
     loadAll();
     return;
   }
@@ -1402,8 +1577,16 @@ async function handleChange(e){
     return;
   }
   if(t.matches('.check-item input[type="checkbox"]')){
-    const id = t.closest('.check-item').dataset.pendId;
-    await supabase.from('pendientes').update({ checked: t.checked }).eq('id', id);
+    const item = t.closest('.check-item');
+    const table = item.dataset.kind === 'general' ? 'general_pendientes' : 'pendientes';
+    await supabase.from(table).update({ checked: t.checked }).eq('id', item.dataset.pendId);
+    loadAll();
+    return;
+  }
+  if(t.classList.contains('pend-priority-select')){
+    const item = t.closest('.check-item');
+    const table = item.dataset.kind === 'general' ? 'general_pendientes' : 'pendientes';
+    await supabase.from(table).update({ priority: t.value || null }).eq('id', item.dataset.pendId);
     loadAll();
     return;
   }
@@ -1490,6 +1673,30 @@ async function handleSubmit(e){
     return;
   }
 
+  if(form.classList.contains('add-general-check-form')){
+    const input = form.querySelector('.check-input');
+    const text = input.value.trim();
+    if(!text) return;
+    await supabase.from('general_pendientes').insert({ text, checked: false, sort_order: state.generalPendientes.length });
+    input.value = '';
+    loadAll();
+    return;
+  }
+
+  if(form.id === 'addTechRefForm'){
+    const category = form.querySelector('.techref-category-input').value.trim();
+    const title = form.querySelector('.techref-title-input').value.trim();
+    const vehicleId = form.querySelector('.techref-vehicle-input').value || null;
+    const content = form.querySelector('.techref-content-input').value.trim();
+    if(!category || !title) return;
+    await supabase.from('tech_reference').insert({
+      category, title, content: content || null, vehicle_id: vehicleId, sort_order: state.techReference.length,
+    });
+    form.reset();
+    loadAll();
+    return;
+  }
+
   if(form.classList.contains('add-log-form')){
     const vid = form.dataset.vid;
     const date = form.querySelector('.log-date-input').value;
@@ -1550,7 +1757,7 @@ document.addEventListener('keydown', e => {
 
 // --- realtime: any change from any device reloads this view -----------
 function subscribeRealtime(){
-  const tables = ['vehicles', 'vehicle_info', 'vehicle_photos', 'pendientes', 'pendiente_attachments', 'historial', 'historial_attachments', 'providers', 'vehicle_documents', 'vehicle_diagrams'];
+  const tables = ['vehicles', 'vehicle_info', 'vehicle_photos', 'pendientes', 'pendiente_attachments', 'historial', 'historial_attachments', 'providers', 'vehicle_documents', 'vehicle_diagrams', 'general_pendientes', 'tech_reference'];
   const channel = supabase.channel('bitacora-changes');
   tables.forEach(t => {
     channel.on('postgres_changes', { event: '*', schema: 'public', table: t }, () => scheduleReload());
