@@ -109,6 +109,74 @@
   }
   .global-view-tab:hover{ color:var(--text); border-color:var(--accent); }
   .global-view-tab.active{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+  .home-tab{ font-weight:600; }
+
+  .home-section{ margin-bottom:2rem; }
+  .home-section:last-child{ margin-bottom:0; }
+  .home-section-title{
+    font-family:'Roboto', sans-serif; font-size:.72rem; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--muted); margin:0 0 .75rem;
+  }
+
+  .home-general-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:.7rem; }
+  .home-nav-card{
+    display:flex; flex-direction:column; gap:.35rem; text-align:left;
+    background:var(--panel); border:1px solid var(--line); border-radius:8px;
+    padding:.9rem 1rem; cursor:pointer; font-family:inherit; color:inherit;
+  }
+  .home-nav-card:hover{ border-color:var(--accent); }
+  .home-nav-card-icon{ font-size:1.3rem; line-height:1; }
+  .home-nav-card-title{ font-family:'Bebas Neue', sans-serif; font-weight:600; font-size:.98rem; }
+  .home-nav-card-stat{ font-size:.78rem; color:var(--muted); }
+
+  .home-vehicle-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:.7rem; }
+  .home-vehicle-card{
+    display:flex; flex-direction:column; gap:.4rem; text-align:left;
+    background:var(--panel); border:1px solid var(--line); border-radius:8px;
+    padding:1rem 1.1rem; cursor:pointer; font-family:inherit; color:inherit;
+  }
+  .home-vehicle-card:hover{ border-color:var(--accent); }
+  .home-vehicle-card-top{ display:flex; align-items:baseline; gap:.5rem; flex-wrap:wrap; }
+  .home-vehicle-name{ font-family:'Bebas Neue', sans-serif; font-weight:600; font-size:1.15rem; }
+  .home-vehicle-type{
+    font-family:'Roboto', sans-serif; font-size:.68rem; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--muted);
+  }
+  .home-vehicle-meta{ display:flex; flex-wrap:wrap; gap:.5rem; font-size:.78rem; color:var(--muted); }
+  .home-vehicle-meta .warn{ color:var(--accent); }
+
+  .home-reminders-list{ display:flex; flex-direction:column; gap:.5rem; }
+  .home-reminder-row{
+    display:block; width:100%; text-align:left; font-family:inherit; cursor:pointer;
+    background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--line);
+    border-radius:6px; padding:.6rem .8rem; font-size:.85rem; color:var(--text);
+  }
+  .home-reminder-row.reminder-overdue{ border-left-color:var(--danger); }
+  .home-reminder-row.reminder-soon{ border-left-color:var(--accent); }
+  .home-reminder-row:hover{ border-color:var(--accent); }
+  .home-reminder-vehicle{ font-weight:600; margin-right:.4rem; }
+  .home-reminder-date{ color:var(--muted); margin-left:.4rem; }
+
+  .home-activity-list{ display:flex; flex-direction:column; }
+  .home-activity-item{
+    display:flex; align-items:baseline; gap:.6rem; flex-wrap:wrap;
+    padding:.55rem 0; border-bottom:1px solid var(--line); font-size:.85rem;
+  }
+  .home-activity-item:last-child{ border-bottom:none; }
+  .home-activity-vehicle{ font-weight:600; cursor:pointer; }
+  .home-activity-vehicle:hover{ color:var(--accent); }
+  .home-activity-date{ color:var(--muted); font-family:'Roboto', sans-serif; font-size:.76rem; white-space:nowrap; }
+  .home-activity-desc{ flex:1; min-width:140px; }
+  .home-activity-cost{ color:var(--accent); font-family:'Roboto', sans-serif; font-size:.8rem; }
+
+  .home-priority-group{ margin-bottom:1rem; }
+  .home-priority-group:last-child{ margin-bottom:0; }
+  .home-priority-vehicle{
+    background:none; border:none; padding:0; margin:0 0 .4rem;
+    font-family:'Bebas Neue', sans-serif; font-size:.85rem; letter-spacing:.02em;
+    color:var(--text); cursor:pointer; display:inline-block;
+  }
+  .home-priority-vehicle:hover{ color:var(--accent); }
   .add-vehicle-btn[aria-expanded="true"]{ border-style:solid; color:var(--accent); border-color:var(--accent); }
   .add-vehicle-form{
     display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1.5rem;
@@ -515,11 +583,12 @@ const supabase = createClient('https://jfivdvkhifqhirrqhcfl.supabase.co', 'sb_pu
 
 const ATTACH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 12.5l6.5-6.5a3 3 0 1 1 4.24 4.24L10.5 18.5a5 5 0 1 1-7.07-7.07L12 3"/></svg>';
 const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const HOME_VIEW = '__home__';
 const ALL_PENDIENTES = '__all_pendientes__';
 const PROVIDERS_VIEW = '__providers__';
 const GENERAL_PENDIENTES_VIEW = '__general_pendientes__';
 const TECH_REF_VIEW = '__tech_reference__';
-const SPECIAL_VIEWS = [ALL_PENDIENTES, PROVIDERS_VIEW, GENERAL_PENDIENTES_VIEW, TECH_REF_VIEW];
+const SPECIAL_VIEWS = [HOME_VIEW, ALL_PENDIENTES, PROVIDERS_VIEW, GENERAL_PENDIENTES_VIEW, TECH_REF_VIEW];
 const PRIORITY_LABELS = { alta: 'Alta', media: 'Media', baja: 'Baja' };
 
 let state = { vehicles: [], providers: [], generalPendientes: [], techReference: [], activeId: null, infoEditMode: false };
@@ -619,6 +688,7 @@ function collectGlobalReminders(){
 }
 
 function renderGlobalReminders(){
+  if(state.activeId === HOME_VIEW){ globalRemindersEl.innerHTML = ''; return; }
   const items = collectGlobalReminders();
   if(!items.length){ globalRemindersEl.innerHTML = ''; return; }
   const overdueCount = items.filter(i => i.rem.cls === 'reminder-overdue').length;
@@ -686,7 +756,7 @@ async function loadAll(){
     }));
     const isSpecialView = SPECIAL_VIEWS.includes(state.activeId);
     if(!state.activeId || (!isSpecialView && !state.vehicles.some(v => v.id === state.activeId))){
-      state.activeId = state.vehicles[0]?.id || null;
+      state.activeId = HOME_VIEW;
     }
     setStatus('');
     render();
@@ -726,7 +796,10 @@ function renderTabs(){
   const providersTab = `
     <button type="button" class="global-view-tab${state.activeId === PROVIDERS_VIEW ? ' active' : ''}" data-vid="${PROVIDERS_VIEW}">🔧 Proveedores${state.providers.length ? ` (${state.providers.length})` : ''}</button>
   `;
-  globalViewTabsEl.innerHTML = allTab + generalPendTab + techRefTab + providersTab;
+  const homeTab = `
+    <button type="button" class="global-view-tab home-tab${state.activeId === HOME_VIEW ? ' active' : ''}" data-vid="${HOME_VIEW}">🏠 Inicio</button>
+  `;
+  globalViewTabsEl.innerHTML = homeTab + allTab + generalPendTab + techRefTab + providersTab;
   tabsEl.innerHTML = state.vehicles.map(v => `
     <button type="button" class="vehicle-tab${v.id === state.activeId ? ' active' : ''}" data-vid="${v.id}">${esc(v.name)}</button>
   `).join('');
@@ -796,7 +869,138 @@ function renderHistorial(h, vehicleName, vehicleUnit){
   </li>`;
 }
 
+function collectRecentActivity(limit = 6){
+  const items = [];
+  for(const v of state.vehicles){
+    for(const h of v.historial){
+      items.push({ vehicleId: v.id, vehicleName: v.name, hist: h });
+    }
+  }
+  items.sort((a, b) => (a.hist.service_date < b.hist.service_date ? 1 : -1));
+  return items.slice(0, limit);
+}
+
+function collectHighPriorityGroups(){
+  const groups = [];
+  for(const v of state.vehicles){
+    const items = sortByPriority(v.pendientes.filter(p => !p.checked && p.priority === 'alta'));
+    if(items.length) groups.push({ id: v.id, name: v.name, kind: 'vehicle', items });
+  }
+  const generalItems = sortByPriority(state.generalPendientes.filter(p => !p.checked && p.priority === 'alta'));
+  if(generalItems.length) groups.push({ id: GENERAL_PENDIENTES_VIEW, name: 'Pendientes generales', kind: 'general', items: generalItems });
+  return groups;
+}
+
+function renderHomePanel(){
+  const reminders = collectGlobalReminders().slice(0, 6);
+  const activity = collectRecentActivity();
+  const priorityGroups = collectHighPriorityGroups();
+  const totalOpen = state.vehicles.reduce((sum, v) => sum + v.pendientes.filter(p => !p.checked).length, 0);
+  const generalOpen = state.generalPendientes.filter(p => !p.checked).length;
+
+  const generalCards = `
+    <div class="home-general-grid">
+      <button type="button" class="home-nav-card" data-vid="${ALL_PENDIENTES}">
+        <span class="home-nav-card-icon">☑</span>
+        <span class="home-nav-card-title">Todos los pendientes</span>
+        <span class="home-nav-card-stat">${totalOpen ? `${totalOpen} sin marcar` : 'Sin pendientes'}</span>
+      </button>
+      <button type="button" class="home-nav-card" data-vid="${GENERAL_PENDIENTES_VIEW}">
+        <span class="home-nav-card-icon">🗒️</span>
+        <span class="home-nav-card-title">Pendientes generales</span>
+        <span class="home-nav-card-stat">${generalOpen ? `${generalOpen} sin marcar` : 'Sin pendientes'}</span>
+      </button>
+      <button type="button" class="home-nav-card" data-vid="${TECH_REF_VIEW}">
+        <span class="home-nav-card-icon">📚</span>
+        <span class="home-nav-card-title">Info técnica</span>
+        <span class="home-nav-card-stat">${state.techReference.length ? `${state.techReference.length} registros` : 'Vacío'}</span>
+      </button>
+      <button type="button" class="home-nav-card" data-vid="${PROVIDERS_VIEW}">
+        <span class="home-nav-card-icon">🔧</span>
+        <span class="home-nav-card-title">Proveedores</span>
+        <span class="home-nav-card-stat">${state.providers.length ? `${state.providers.length} registrados` : 'Vacío'}</span>
+      </button>
+    </div>
+  `;
+
+  const vehicleCards = state.vehicles.length ? `
+    <div class="home-vehicle-grid">
+      ${state.vehicles.map(v => {
+        const openCount = v.pendientes.filter(p => !p.checked).length;
+        const lastService = v.historial.length ? v.historial[0].service_date : null;
+        return `
+        <div class="home-vehicle-card" data-action="jump-vehicle" data-vid="${v.id}">
+          <div class="home-vehicle-card-top">
+            <span class="home-vehicle-name">${esc(v.name)}</span>
+            ${v.type ? `<span class="home-vehicle-type">${esc(v.type)}</span>` : ''}
+          </div>
+          <div class="home-vehicle-meta">
+            ${openCount ? `<span class="warn">${openCount} pendiente${openCount === 1 ? '' : 's'}</span>` : '<span>Sin pendientes</span>'}
+            ${lastService ? `<span>Último servicio: ${fmtDate(lastService)}</span>` : ''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  ` : '<p class="empty-state">Agrega tu primer vehículo con el botón "+" de arriba.</p>';
+
+  const remindersSection = reminders.length ? `
+    <div class="home-section">
+      <h3 class="home-section-title">⏰ Vencimientos más urgentes</h3>
+      <div class="home-reminders-list">
+        ${reminders.map(i => `
+          <button type="button" class="home-reminder-row global-reminder-pill ${i.rem.cls}" data-vid="${i.vehicleId}">
+            <span class="home-reminder-vehicle">${esc(i.vehicleName)}</span>${esc(i.hist.description)}<span class="home-reminder-date">${esc(i.rem.label)}</span>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  ` : '';
+
+  const activitySection = activity.length ? `
+    <div class="home-section">
+      <h3 class="home-section-title">🕓 Actividad reciente</h3>
+      <div class="home-activity-list">
+        ${activity.map(i => `
+          <div class="home-activity-item">
+            <span class="home-activity-vehicle" data-action="jump-vehicle" data-vid="${i.vehicleId}">${esc(i.vehicleName)}</span>
+            <span class="home-activity-desc">${esc(i.hist.description)}</span>
+            ${i.hist.cost != null ? `<span class="home-activity-cost">${esc(fmtCost(i.hist.cost))}</span>` : ''}
+            <span class="home-activity-date">${fmtDate(i.hist.service_date)}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  ` : '';
+
+  const prioritySection = priorityGroups.length ? `
+    <div class="home-section">
+      <h3 class="home-section-title">🔴 Pendientes de alta prioridad</h3>
+      ${priorityGroups.map(g => `
+        <div class="home-priority-group">
+          <button type="button" class="home-priority-vehicle" data-action="jump-vehicle" data-vid="${g.id}">${esc(g.name)}</button>
+          <ul class="checklist">${g.items.map(p => renderPendiente(p, g.kind)).join('')}</ul>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+
+  panelsEl.innerHTML = `
+    <div class="home-section">
+      <h3 class="home-section-title">General</h3>
+      ${generalCards}
+    </div>
+    ${remindersSection}
+    ${prioritySection}
+    ${activitySection}
+    <div class="home-section">
+      <h3 class="home-section-title">Tus vehículos</h3>
+      ${vehicleCards}
+    </div>
+  `;
+}
+
 function renderPanels(){
+  if(state.activeId === HOME_VIEW){ renderHomePanel(); return; }
   if(state.activeId === ALL_PENDIENTES){ renderAllPendientesPanel(); return; }
   if(state.activeId === PROVIDERS_VIEW){ renderProvidersPanel(); return; }
   if(state.activeId === GENERAL_PENDIENTES_VIEW){ renderGeneralPendientesPanel(); return; }
@@ -1439,7 +1643,7 @@ async function handleClick(e){
   const thumbImg = e.target.closest('.photo-thumb') && e.target.tagName === 'IMG' ? e.target : null;
   if(thumbImg){ openLightboxImage(thumbImg.dataset.full || thumbImg.src); return; }
 
-  const tab = e.target.closest('.vehicle-tab, .global-view-tab');
+  const tab = e.target.closest('.vehicle-tab, .global-view-tab, .home-nav-card');
   if(tab){ state.activeId = tab.dataset.vid; state.infoEditMode = false; render(); return; }
 
   const gremind = e.target.closest('.global-reminder-pill');
