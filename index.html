@@ -127,6 +127,68 @@
   .home-nav-card-primary{ border-color:var(--accent); background:var(--panel-2); }
   .home-nav-card-primary .home-nav-card-title{ color:var(--accent); }
 
+  /* --- Lock screen (contraseña compartida) --- */
+  .lock-screen{
+    position:fixed; inset:0; background:var(--bg); display:flex;
+    align-items:center; justify-content:center; padding:1.5rem; z-index:999;
+  }
+  .lock-card{
+    width:100%; max-width:340px; background:var(--panel); border:1px solid var(--line);
+    border-radius:10px; padding:1.75rem 1.5rem; text-align:center;
+  }
+  .lock-card h2{ margin:.4rem 0 .3rem; font-family:'Bebas Neue', sans-serif; letter-spacing:.03em; }
+  .lock-sub{ color:var(--muted); font-size:.85rem; margin:0 0 1.1rem; }
+  #lockForm{ display:flex; flex-direction:column; gap:.6rem; }
+  #lockForm input{
+    background:var(--panel-2); color:var(--text); border:1px solid var(--line);
+    border-radius:6px; padding:.6rem .75rem; font-family:inherit; font-size:.95rem; text-align:center;
+  }
+  #lockForm button{ margin-top:.2rem; }
+  .lock-error{ color:var(--danger); font-size:.8rem; margin:.8rem 0 0; }
+
+  /* --- Ajustes --- */
+  .ajustes-section{
+    background:var(--panel); border:1px solid var(--line); border-radius:8px;
+    padding:1rem 1.1rem; margin-bottom:1rem;
+  }
+  .ajustes-section h3{
+    margin:0 0 .3rem; font-family:'Bebas Neue', sans-serif; letter-spacing:.03em; font-size:1.05rem;
+  }
+  .ajustes-desc{ color:var(--muted); font-size:.82rem; line-height:1.5; margin:0 0 .8rem; }
+  .ajustes-status{
+    display:inline-flex; align-items:center; gap:.4rem; font-size:.8rem; color:var(--muted);
+    margin-bottom:.7rem;
+  }
+  .ajustes-status.on{ color:var(--ok); }
+  .ajustes-row{ display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+  .ajustes-row-gap{ margin-top:.6rem; }
+  .ajustes-row input{
+    background:var(--panel-2); color:var(--text); border:1px solid var(--line);
+    border-radius:5px; padding:.5rem .65rem; font-family:inherit; font-size:.85rem; flex:1; min-width:160px;
+  }
+
+  /* --- Consumo de combustible --- */
+  .fuel-list{ display:flex; flex-direction:column; gap:.4rem; margin-bottom:.6rem; }
+  .fuel-row{
+    display:flex; align-items:center; gap:.7rem; background:var(--panel);
+    border:1px solid var(--line); border-radius:6px; padding:.5rem .75rem; flex-wrap:wrap; font-size:.82rem;
+  }
+  .fuel-date{ color:var(--muted); white-space:nowrap; }
+  .fuel-rate{ color:var(--accent); font-weight:600; margin-left:auto; }
+  .fuel-partial{ color:var(--muted); font-style:italic; }
+  .add-fuel-form{
+    display:flex; gap:.5rem; flex-wrap:wrap; align-items:center;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:6px; padding:.55rem .7rem;
+  }
+  .add-fuel-form input, .add-fuel-form select{
+    background:var(--panel); color:var(--text); border:1px solid var(--line);
+    border-radius:5px; padding:.5rem .6rem; font-family:inherit; font-size:.85rem;
+  }
+  .add-fuel-form .fuel-odo-input, .add-fuel-form .fuel-volume-input, .add-fuel-form .fuel-cost-input{ width:110px; }
+  .add-fuel-form label.fuel-full-label{
+    display:flex; align-items:center; gap:.35rem; font-size:.8rem; color:var(--muted); cursor:pointer;
+  }
+
   .home-vehicle-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:.7rem; }
   .home-vehicle-card{
     display:flex; flex-direction:column; gap:.4rem; text-align:left;
@@ -585,6 +647,18 @@
 </style>
 </head>
 <body>
+<div id="lockScreen" class="lock-screen" hidden>
+  <div class="lock-card">
+    <span class="eyebrow">Bitácora de Mantenimiento</span>
+    <h2>Acceso protegido</h2>
+    <p class="lock-sub">Ingresa la contraseña para entrar.</p>
+    <form id="lockForm">
+      <input id="lockPasswordInput" type="password" placeholder="Contraseña" autocomplete="current-password" required>
+      <button class="btn-ghost" type="submit">Entrar</button>
+    </form>
+    <p id="lockError" class="lock-error" hidden>Contraseña incorrecta. Intenta de nuevo.</p>
+  </div>
+</div>
 <div class="page">
   <header class="top">
     <img class="brand-logo" src="data:image/png;base64,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" alt="The Mechanic Motorsport">
@@ -623,7 +697,11 @@ const PROVIDERS_VIEW = '__providers__';
 const GENERAL_PENDIENTES_VIEW = '__general_pendientes__';
 const TECH_REF_VIEW = '__tech_reference__';
 const PARTS_SEARCH_VIEW = '__parts_search__';
-const SPECIAL_VIEWS = [HOME_VIEW, VEHICLES_VIEW, ALL_PENDIENTES, PROVIDERS_VIEW, GENERAL_PENDIENTES_VIEW, TECH_REF_VIEW, PARTS_SEARCH_VIEW];
+const AJUSTES_VIEW = '__ajustes__';
+const SPECIAL_VIEWS = [HOME_VIEW, VEHICLES_VIEW, ALL_PENDIENTES, PROVIDERS_VIEW, GENERAL_PENDIENTES_VIEW, TECH_REF_VIEW, PARTS_SEARCH_VIEW, AJUSTES_VIEW];
+const VAPID_PUBLIC_KEY = 'BPYe6oq8H_gRDtAsFnG7TJ6YNpe4L3YMCcL30aE0-xhifFxA5xSP_n9JaRXQjPvJ9DBokkHRZSKWI5i1s58LMuQ';
+const ACCESS_OK_KEY = 'bitacora_access_ok';
+const PUSH_SUBSCRIBED_KEY = 'bitacora_push_subscribed';
 const PARTS_STORES = [
   { name: 'Amazon', url: q => `https://www.amazon.com/s?k=${encodeURIComponent(q)}` },
   { name: 'eBay', url: q => `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}` },
@@ -634,7 +712,11 @@ const PARTS_STORES = [
 ];
 const PRIORITY_LABELS = { alta: 'Alta', media: 'Media', baja: 'Baja' };
 
-let state = { vehicles: [], providers: [], generalPendientes: [], techReference: [], activeId: null, infoEditMode: false, showAddVehicleForm: false, partsSearchQuery: '' };
+let state = {
+  vehicles: [], providers: [], generalPendientes: [], techReference: [], activeId: null,
+  infoEditMode: false, showAddVehicleForm: false, partsSearchQuery: '',
+  accessPasswordSet: false,
+};
 
 const statusLine = document.getElementById('statusLine');
 const backHomeEl = document.getElementById('backHome');
@@ -757,7 +839,7 @@ async function loadAll(){
     if(ve) throw ve;
     const ids = (vehicles || []).map(v => v.id);
     const empty = { data: [] };
-    const [infoR, photosR, pendR, histR, providersR, docsR, diagramsR, generalPendR, techRefR] = await Promise.all([
+    const [infoR, photosR, pendR, histR, providersR, docsR, diagramsR, generalPendR, techRefR, fuelR, settingsR] = await Promise.all([
       ids.length ? supabase.from('vehicle_info').select('*').in('vehicle_id', ids).order('sort_order') : Promise.resolve(empty),
       ids.length ? supabase.from('vehicle_photos').select('*').in('vehicle_id', ids).order('created_at') : Promise.resolve(empty),
       ids.length ? supabase.from('pendientes').select('*').in('vehicle_id', ids).order('sort_order') : Promise.resolve(empty),
@@ -767,12 +849,16 @@ async function loadAll(){
       ids.length ? supabase.from('vehicle_diagrams').select('*').in('vehicle_id', ids).order('created_at') : Promise.resolve(empty),
       supabase.from('general_pendientes').select('*').order('sort_order'),
       supabase.from('tech_reference').select('*').order('sort_order'),
+      ids.length ? supabase.from('fuel_log').select('*').in('vehicle_id', ids).order('fill_date') : Promise.resolve(empty),
+      supabase.from('app_settings').select('key, value'),
     ]);
     state.providers = providersR.data || [];
     state.generalPendientes = generalPendR.data || [];
     state.techReference = techRefR.data || [];
     const documents = docsR.data || [];
     const diagrams = diagramsR.data || [];
+    const fuelLog = fuelR.data || [];
+    state.accessPasswordSet = !!(settingsR.data || []).find(s => s.key === 'access_password_hash')?.value;
 
     const pend = pendR.data || [];
     const hist = histR.data || [];
@@ -795,6 +881,7 @@ async function loadAll(){
       historial: hist.filter(h => h.vehicle_id === v.id).map(h => ({ ...h, attachments: histAtt.filter(a => a.historial_id === h.id) })),
       documents: documents.filter(d => d.vehicle_id === v.id),
       diagrams: diagrams.filter(d => d.vehicle_id === v.id),
+      fuelLog: fuelLog.filter(f => f.vehicle_id === v.id),
     }));
     const isSpecialView = SPECIAL_VIEWS.includes(state.activeId);
     if(!state.activeId || (!isSpecialView && !state.vehicles.some(v => v.id === state.activeId))){
@@ -863,6 +950,34 @@ function renderPendiente(p, kind = 'vehicle'){
     </div>
     ${kind === 'vehicle' ? `<div class="log-attachments">${p.attachments.map(a => renderAttachment(a, 'pend')).join('')}</div>` : ''}
   </li>`;
+}
+
+function fuelStatsFor(v){
+  const sorted = [...(v.fuelLog || [])].sort((a, b) => (a.fill_date < b.fill_date ? -1 : a.fill_date > b.fill_date ? 1 : (a.created_at < b.created_at ? -1 : 1)));
+  const withRate = [];
+  let prevOdo = null;
+  for(const f of sorted){
+    let rate = null;
+    if(f.full_tank && prevOdo != null && f.odometer_value != null && f.volume){
+      const dist = f.odometer_value - prevOdo;
+      if(dist > 0) rate = dist / f.volume;
+    }
+    if(f.odometer_value != null) prevOdo = f.odometer_value;
+    withRate.push({ ...f, rate });
+  }
+  return withRate.reverse();
+}
+
+function renderFuelRow(f, unit){
+  return `
+  <div class="fuel-row" data-fuel-id="${f.id}">
+    <span class="fuel-date">${fmtDate(f.fill_date)}</span>
+    <span>${esc(numFmt(f.volume))} ${esc(f.volume_unit || 'L')}${!f.full_tank ? ' <span class="fuel-partial">(parcial)</span>' : ''}</span>
+    ${f.odometer_value != null ? `<span>${esc(numFmt(f.odometer_value))} ${esc(unit)}</span>` : ''}
+    ${f.cost != null ? `<span>${esc(fmtCost(f.cost))}</span>` : ''}
+    ${f.rate != null ? `<span class="fuel-rate">${f.rate.toFixed(1)} ${esc(unit)}/${esc(f.volume_unit || 'L')}</span>` : ''}
+    <button type="button" class="icon-btn delete-fuel" data-fuel-id="${f.id}" title="Eliminar">✕</button>
+  </div>`;
 }
 
 function renderHistorial(h, vehicleName, vehicleUnit){
@@ -952,6 +1067,11 @@ function renderHomePanel(){
         <span class="home-nav-card-icon">🔍</span>
         <span class="home-nav-card-title">Buscar partes</span>
         <span class="home-nav-card-stat">Aceite, filtros, bujías...</span>
+      </button>
+      <button type="button" class="home-nav-card" data-vid="${AJUSTES_VIEW}">
+        <span class="home-nav-card-icon">⚙️</span>
+        <span class="home-nav-card-title">Ajustes</span>
+        <span class="home-nav-card-stat">Respaldo, acceso, notificaciones</span>
       </button>
     </div>
   `;
@@ -1062,6 +1182,7 @@ function renderPanels(){
   if(state.activeId === GENERAL_PENDIENTES_VIEW){ renderGeneralPendientesPanel(); return; }
   if(state.activeId === TECH_REF_VIEW){ renderTechReferencePanel(); return; }
   if(state.activeId === PARTS_SEARCH_VIEW){ renderPartsSearchPanel(); return; }
+  if(state.activeId === AJUSTES_VIEW){ renderAjustesPanel(); return; }
   const v = state.vehicles.find(x => x.id === state.activeId);
   if(!v){
     panelsEl.innerHTML = '<p class="empty-state">Agrega tu primer vehículo para empezar.</p>';
@@ -1169,6 +1290,25 @@ function renderPanels(){
           <button type="button" class="btn-ghost add-vehicle-diagram" data-vid="${v.id}">+ Agregar diagrama</button>
           <input type="file" accept="image/*,.pdf" class="vehicle-diagram-input" data-vid="${v.id}" hidden>
         </div>
+      </div>
+
+      <div class="v-subsection">
+        <h3>⛽ Consumo de combustible</h3>
+        <div class="fuel-list">
+          ${fuelStatsFor(v).map(f => renderFuelRow(f, unit)).join('') || '<p class="empty-state">Aún no registras cargas de combustible.</p>'}
+        </div>
+        <form class="add-fuel-form" data-vid="${v.id}">
+          <input class="fuel-date-input" type="date" required>
+          <input class="fuel-odo-input" type="text" inputmode="decimal" placeholder="Lectura (${esc(unit)})">
+          <input class="fuel-volume-input" type="text" inputmode="decimal" placeholder="Litros/galones" required>
+          <select class="fuel-unit-select">
+            <option value="L">L</option>
+            <option value="gal">gal</option>
+          </select>
+          <input class="fuel-cost-input" type="text" inputmode="decimal" placeholder="Costo">
+          <label class="fuel-full-label"><input type="checkbox" class="fuel-full-input" checked> Tanque lleno</label>
+          <button class="btn-ghost" type="submit">Añadir</button>
+        </form>
       </div>
     </div>
 
@@ -1323,6 +1463,47 @@ function renderPartsSearchPanel(){
         ${PARTS_STORES.map(s => `<a class="parts-store-link" href="${s.url(q)}" target="_blank" rel="noopener">${esc(s.name)} ↗</a>`).join('')}
       </div>
     </div>` : ''}
+  `;
+}
+
+function renderAjustesPanel(){
+  const pushSupported = ('serviceWorker' in navigator) && ('PushManager' in window) && (typeof Notification !== 'undefined');
+  const pushGranted = pushSupported && Notification.permission === 'granted' && localStorage.getItem(PUSH_SUBSCRIBED_KEY) === '1';
+  const pushDenied = pushSupported && Notification.permission === 'denied';
+  panelsEl.innerHTML = `
+    <div class="vehicle-panel-header">
+      <span class="v-name">Ajustes</span>
+    </div>
+
+    <div class="ajustes-section">
+      <h3>💾 Respaldo de datos</h3>
+      <p class="ajustes-desc">Descarga toda la información de la app (vehículos, historial, pendientes, proveedores, info técnica, etc.) en un solo archivo, como copia propia.</p>
+      <button type="button" class="btn-ghost" id="downloadBackupBtn">Descargar respaldo (JSON)</button>
+    </div>
+
+    <div class="ajustes-section">
+      <h3>🔒 Acceso con contraseña</h3>
+      <p class="ajustes-desc">Si activas una contraseña, hay que ingresarla antes de ver la app — así puedes compartir el link con alguien más sin que cualquiera que lo encuentre entre directo. No sustituye un login real por usuario, pero evita accesos accidentales o de curiosos.</p>
+      <p class="ajustes-status ${state.accessPasswordSet ? 'on' : ''}">${state.accessPasswordSet ? '● Contraseña activada' : '○ Sin contraseña — acceso abierto a quien tenga el link'}</p>
+      <form id="setPasswordForm" class="ajustes-row">
+        <input type="password" id="newPasswordInput" placeholder="${state.accessPasswordSet ? 'Nueva contraseña' : 'Crear contraseña'}" autocomplete="new-password">
+        <button class="btn-ghost" type="submit">${state.accessPasswordSet ? 'Cambiar' : 'Activar'}</button>
+      </form>
+      ${state.accessPasswordSet ? `
+      <div class="ajustes-row ajustes-row-gap">
+        <button type="button" class="btn-ghost" id="removePasswordBtn">Quitar contraseña</button>
+        <button type="button" class="btn-ghost" id="lockDeviceBtn">Bloquear este dispositivo</button>
+      </div>` : ''}
+    </div>
+
+    <div class="ajustes-section">
+      <h3>🔔 Notificaciones push</h3>
+      <p class="ajustes-desc">Recibe un aviso en este dispositivo (aunque no tengas la app abierta) cuando haya recordatorios vencidos o próximos a vencer. Se revisa una vez al día.</p>
+      ${!pushSupported ? '<p class="ajustes-status">Este navegador no soporta notificaciones push.</p>'
+        : pushDenied ? '<p class="ajustes-status">Bloqueaste las notificaciones para este sitio — actívalas desde los ajustes del navegador si cambias de opinión.</p>'
+        : `<p class="ajustes-status ${pushGranted ? 'on' : ''}">${pushGranted ? '● Activadas en este dispositivo' : '○ No activadas en este dispositivo'}</p>
+        <button type="button" class="btn-ghost" id="${pushGranted ? 'disablePushBtn' : 'enablePushBtn'}">${pushGranted ? 'Desactivar en este dispositivo' : 'Activar en este dispositivo'}</button>`}
+    </div>
   `;
 }
 
@@ -1545,6 +1726,21 @@ async function exportVehiclePDF(vid){
       });
     } else {
       line('Sin historial registrado.');
+    }
+    y += 3;
+
+    heading('Consumo de combustible');
+    const fuelPdf = fuelStatsFor(v);
+    if(fuelPdf.length){
+      fuelPdf.forEach(f => {
+        const parts = [`${numFmt(f.volume)} ${f.volume_unit || 'L'}${f.full_tank ? '' : ' (parcial)'}`];
+        if(f.odometer_value != null) parts.push(`${numFmt(f.odometer_value)} ${unit}`);
+        if(f.cost != null) parts.push(fmtCost(f.cost));
+        if(f.rate != null) parts.push(`${f.rate.toFixed(1)} ${unit}/${f.volume_unit || 'L'}`);
+        line(`${fmtDate(f.fill_date)} — ${parts.join('   ·   ')}`, 9.5);
+      });
+    } else {
+      line('Sin cargas de combustible registradas.');
     }
 
     const photoItems = [
@@ -1894,6 +2090,31 @@ async function handleClick(e){
     loadAll();
     return;
   }
+
+  const delFuel = e.target.closest('.delete-fuel');
+  if(delFuel){
+    await supabase.from('fuel_log').delete().eq('id', delFuel.dataset.fuelId);
+    loadAll();
+    return;
+  }
+
+  if(e.target.id === 'downloadBackupBtn'){ downloadBackup(e.target); return; }
+
+  if(e.target.id === 'removePasswordBtn'){
+    if(!confirm('¿Quitar la contraseña? Cualquiera con el link podrá entrar sin pedirla.')) return;
+    await supabase.from('app_settings').delete().eq('key', 'access_password_hash');
+    loadAll();
+    return;
+  }
+
+  if(e.target.id === 'lockDeviceBtn'){
+    localStorage.removeItem(ACCESS_OK_KEY);
+    location.reload();
+    return;
+  }
+
+  if(e.target.id === 'enablePushBtn'){ subscribeToPush(e.target); return; }
+  if(e.target.id === 'disablePushBtn'){ unsubscribeFromPush(e.target); return; }
 }
 
 document.addEventListener('change', async e => {
@@ -2045,6 +2266,55 @@ async function handleSubmit(e){
     return;
   }
 
+  if(form.id === 'lockForm'){
+    const pwd = document.getElementById('lockPasswordInput').value;
+    await attemptUnlock(pwd);
+    return;
+  }
+
+  if(form.id === 'setPasswordForm'){
+    const pwd = document.getElementById('newPasswordInput').value;
+    if(!pwd || pwd.length < 4){ alert('La contraseña debe tener al menos 4 caracteres.'); return; }
+    const hash = await sha256Hex(pwd);
+    await supabase.from('app_settings').upsert({ key: 'access_password_hash', value: hash, updated_at: new Date().toISOString() });
+    localStorage.setItem(ACCESS_OK_KEY, '1');
+    form.reset();
+    loadAll();
+    return;
+  }
+
+  if(form.classList.contains('add-fuel-form')){
+    const vid = form.dataset.vid;
+    const date = form.querySelector('.fuel-date-input').value;
+    const odometerRaw = form.querySelector('.fuel-odo-input').value.trim();
+    const volumeRaw = form.querySelector('.fuel-volume-input').value.trim();
+    const unit = form.querySelector('.fuel-unit-select').value;
+    const costRaw = form.querySelector('.fuel-cost-input').value.trim();
+    const fullTank = form.querySelector('.fuel-full-input').checked;
+    if(!date || !volumeRaw) return;
+    const odometer = odometerRaw === '' ? null : parseFloat(odometerRaw.replace(/[^0-9.]/g, ''));
+    const volume = parseFloat(volumeRaw.replace(/[^0-9.]/g, ''));
+    const cost = costRaw === '' ? null : parseFloat(costRaw.replace(/[^0-9.]/g, ''));
+    if(isNaN(volume)) return;
+    await supabase.from('fuel_log').insert({
+      vehicle_id: vid, fill_date: date,
+      odometer_value: (odometer == null || isNaN(odometer)) ? null : odometer,
+      volume, volume_unit: unit,
+      cost: (cost == null || isNaN(cost)) ? null : cost,
+      full_tank: fullTank,
+    });
+    if(odometer != null && !isNaN(odometer)){
+      const v = findVehicle(vid);
+      if(v && (v.odometer_value == null || odometer > v.odometer_value)){
+        await supabase.from('vehicles').update({ odometer_value: odometer }).eq('id', vid);
+      }
+    }
+    form.reset();
+    form.querySelector('.fuel-full-input').checked = true;
+    loadAll();
+    return;
+  }
+
   if(form.id === 'partsSearchForm'){
     const q = form.querySelector('.parts-search-input').value.trim();
     if(!q) return;
@@ -2127,7 +2397,7 @@ document.addEventListener('keydown', e => {
 
 // --- realtime: any change from any device reloads this view -----------
 function subscribeRealtime(){
-  const tables = ['vehicles', 'vehicle_info', 'vehicle_photos', 'pendientes', 'pendiente_attachments', 'historial', 'historial_attachments', 'providers', 'vehicle_documents', 'vehicle_diagrams', 'general_pendientes', 'tech_reference'];
+  const tables = ['vehicles', 'vehicle_info', 'vehicle_photos', 'pendientes', 'pendiente_attachments', 'historial', 'historial_attachments', 'providers', 'vehicle_documents', 'vehicle_diagrams', 'general_pendientes', 'tech_reference', 'fuel_log'];
   const channel = supabase.channel('bitacora-changes');
   tables.forEach(t => {
     channel.on('postgres_changes', { event: '*', schema: 'public', table: t }, () => scheduleReload());
@@ -2137,8 +2407,149 @@ function subscribeRealtime(){
 let reloadTimer = null;
 function scheduleReload(){ clearTimeout(reloadTimer); reloadTimer = setTimeout(loadAll, 400); }
 
-loadAll();
-subscribeRealtime();
+// --- respaldo de datos --------------------------------------------------
+async function downloadBackup(btn){
+  const original = btn.textContent;
+  btn.textContent = 'Preparando…';
+  btn.disabled = true;
+  try{
+    const tables = ['vehicles', 'vehicle_info', 'vehicle_photos', 'pendientes', 'pendiente_attachments', 'historial', 'historial_attachments', 'providers', 'vehicle_documents', 'vehicle_diagrams', 'general_pendientes', 'tech_reference', 'fuel_log'];
+    const results = await Promise.all(tables.map(t => supabase.from(t).select('*')));
+    const backup = { exported_at: new Date().toISOString(), app: 'Bitácora de Mantenimiento' };
+    tables.forEach((t, i) => { backup[t] = results[i].data || []; });
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `bitacora-respaldo-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }catch(err){
+    console.error(err);
+    alert('No se pudo generar el respaldo.');
+  }finally{
+    btn.textContent = original;
+    btn.disabled = false;
+  }
+}
+
+// --- acceso con contraseña compartida -----------------------------------
+async function sha256Hex(text){
+  const enc = new TextEncoder().encode(text);
+  const digest = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function checkAccessGate(){
+  if(localStorage.getItem(ACCESS_OK_KEY) === '1') return true;
+  try{
+    const { data } = await supabase.from('app_settings').select('value').eq('key', 'access_password_hash').maybeSingle();
+    const hash = data?.value;
+    if(!hash) return true;
+    showLockScreen();
+    return false;
+  }catch(err){
+    console.error(err);
+    return true;
+  }
+}
+
+function showLockScreen(){
+  document.querySelector('.page').style.display = 'none';
+  document.getElementById('lockScreen').hidden = false;
+  setTimeout(() => document.getElementById('lockPasswordInput')?.focus(), 50);
+}
+
+async function attemptUnlock(pwd){
+  const errEl = document.getElementById('lockError');
+  errEl.hidden = true;
+  try{
+    const { data } = await supabase.from('app_settings').select('value').eq('key', 'access_password_hash').maybeSingle();
+    const hash = data?.value;
+    const enteredHash = await sha256Hex(pwd || '');
+    if(hash && enteredHash === hash){
+      localStorage.setItem(ACCESS_OK_KEY, '1');
+      document.getElementById('lockScreen').hidden = true;
+      document.querySelector('.page').style.display = '';
+      boot();
+    }else{
+      errEl.textContent = 'Contraseña incorrecta. Intenta de nuevo.';
+      errEl.hidden = false;
+      const input = document.getElementById('lockPasswordInput');
+      input.value = '';
+      input.focus();
+    }
+  }catch(err){
+    console.error(err);
+    errEl.textContent = 'No se pudo verificar la contraseña. Revisa tu conexión.';
+    errEl.hidden = false;
+  }
+}
+
+// --- notificaciones push --------------------------------------------------
+function urlBase64ToUint8Array(base64String){
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for(let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+async function subscribeToPush(btn){
+  btn.textContent = 'Activando…';
+  btn.disabled = true;
+  try{
+    const permission = await Notification.requestPermission();
+    if(permission !== 'granted'){ render(); return; }
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if(!sub){
+      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) });
+    }
+    const json = sub.toJSON();
+    await supabase.from('push_subscriptions').upsert(
+      { endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth },
+      { onConflict: 'endpoint' }
+    );
+    localStorage.setItem(PUSH_SUBSCRIBED_KEY, '1');
+    render();
+  }catch(err){
+    console.error(err);
+    alert('No se pudieron activar las notificaciones en este dispositivo.');
+    render();
+  }
+}
+
+async function unsubscribeFromPush(btn){
+  btn.disabled = true;
+  try{
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if(sub){
+      await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
+      await sub.unsubscribe();
+    }
+    localStorage.removeItem(PUSH_SUBSCRIBED_KEY);
+    render();
+  }catch(err){
+    console.error(err);
+    alert('No se pudo desactivar.');
+    render();
+  }
+}
+
+// --- arranque ------------------------------------------------------------
+async function boot(){
+  const ok = await checkAccessGate();
+  if(!ok) return;
+  loadAll();
+  subscribeRealtime();
+}
+boot();
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => {
