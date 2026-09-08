@@ -540,6 +540,26 @@
   .add-techref-form .techref-vehicle-input{ width:170px; }
   .add-techref-form .techref-content-input{ flex:1; min-width:200px; resize:vertical; font-family:inherit; }
 
+  .parts-search-hint{ color:var(--muted); font-size:.88rem; margin:0 0 1rem; max-width:640px; }
+  .parts-search-form{
+    display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1.5rem;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:6px; padding:.55rem .7rem;
+  }
+  .parts-search-form input{
+    flex:1; min-width:220px; background:var(--panel); color:var(--text); border:1px solid var(--line);
+    border-radius:5px; padding:.5rem .65rem; font-family:inherit; font-size:.9rem;
+  }
+  .parts-search-results-title{
+    font-family:'Bebas Neue', sans-serif; font-weight:500; font-size:.95rem;
+    letter-spacing:.02em; margin:0 0 .75rem; color:var(--accent);
+  }
+  .parts-store-list{ display:flex; flex-wrap:wrap; gap:.6rem; }
+  .parts-store-link{
+    background:var(--panel); border:1px solid var(--line); color:var(--text);
+    border-radius:6px; padding:.6rem .9rem; font-size:.88rem; text-decoration:none;
+  }
+  .parts-store-link:hover{ border-color:var(--accent); color:var(--accent); }
+
   .file-chip{
     display:flex; align-items:center; gap:.4rem; background:var(--panel-2);
     border:1px solid var(--line); border-radius:6px; padding:.35rem .5rem .35rem .7rem;
@@ -602,10 +622,19 @@ const ALL_PENDIENTES = '__all_pendientes__';
 const PROVIDERS_VIEW = '__providers__';
 const GENERAL_PENDIENTES_VIEW = '__general_pendientes__';
 const TECH_REF_VIEW = '__tech_reference__';
-const SPECIAL_VIEWS = [HOME_VIEW, VEHICLES_VIEW, ALL_PENDIENTES, PROVIDERS_VIEW, GENERAL_PENDIENTES_VIEW, TECH_REF_VIEW];
+const PARTS_SEARCH_VIEW = '__parts_search__';
+const SPECIAL_VIEWS = [HOME_VIEW, VEHICLES_VIEW, ALL_PENDIENTES, PROVIDERS_VIEW, GENERAL_PENDIENTES_VIEW, TECH_REF_VIEW, PARTS_SEARCH_VIEW];
+const PARTS_STORES = [
+  { name: 'Amazon', url: q => `https://www.amazon.com/s?k=${encodeURIComponent(q)}` },
+  { name: 'eBay', url: q => `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}` },
+  { name: 'AutoZone', url: q => `https://www.autozone.com/searchresult?searchText=${encodeURIComponent(q)}` },
+  { name: "O'Reilly Auto Parts", url: q => `https://www.oreillyauto.com/search?q=${encodeURIComponent(q)}` },
+  { name: 'Partzilla (motos, marino, motores)', url: q => `https://www.partzilla.com/search?q=${encodeURIComponent(q)}` },
+  { name: 'Google', url: q => `https://www.google.com/search?q=${encodeURIComponent(q)}` },
+];
 const PRIORITY_LABELS = { alta: 'Alta', media: 'Media', baja: 'Baja' };
 
-let state = { vehicles: [], providers: [], generalPendientes: [], techReference: [], activeId: null, infoEditMode: false, showAddVehicleForm: false };
+let state = { vehicles: [], providers: [], generalPendientes: [], techReference: [], activeId: null, infoEditMode: false, showAddVehicleForm: false, partsSearchQuery: '' };
 
 const statusLine = document.getElementById('statusLine');
 const backHomeEl = document.getElementById('backHome');
@@ -919,6 +948,11 @@ function renderHomePanel(){
         <span class="home-nav-card-title">Proveedores</span>
         <span class="home-nav-card-stat">${state.providers.length ? `${state.providers.length} registrados` : 'Vacío'}</span>
       </button>
+      <button type="button" class="home-nav-card" data-vid="${PARTS_SEARCH_VIEW}">
+        <span class="home-nav-card-icon">🔍</span>
+        <span class="home-nav-card-title">Buscar partes</span>
+        <span class="home-nav-card-stat">Aceite, filtros, bujías...</span>
+      </button>
     </div>
   `;
 
@@ -1027,6 +1061,7 @@ function renderPanels(){
   if(state.activeId === PROVIDERS_VIEW){ renderProvidersPanel(); return; }
   if(state.activeId === GENERAL_PENDIENTES_VIEW){ renderGeneralPendientesPanel(); return; }
   if(state.activeId === TECH_REF_VIEW){ renderTechReferencePanel(); return; }
+  if(state.activeId === PARTS_SEARCH_VIEW){ renderPartsSearchPanel(); return; }
   const v = state.vehicles.find(x => x.id === state.activeId);
   if(!v){
     panelsEl.innerHTML = '<p class="empty-state">Agrega tu primer vehículo para empezar.</p>';
@@ -1267,6 +1302,27 @@ function renderTechReferencePanel(){
       <textarea class="techref-content-input" placeholder="Detalle (ej. 10W-40, cambiar cada 100 hrs)" rows="2"></textarea>
       <button class="btn-ghost" type="submit">Añadir</button>
     </form>
+  `;
+}
+
+function renderPartsSearchPanel(){
+  const q = state.partsSearchQuery;
+  panelsEl.innerHTML = `
+    <div class="vehicle-panel-header">
+      <span class="v-name">Buscar partes</span>
+    </div>
+    <p class="parts-search-hint">Escribe qué parte necesitas (marca, modelo, año ayuda a afinar la búsqueda) y te doy links directos a varias tiendas.</p>
+    <form id="partsSearchForm" class="parts-search-form">
+      <input class="parts-search-input" type="text" placeholder="Ej. filtro de aceite Yamaha 150 2018" value="${esc(q)}" required>
+      <button class="btn-ghost" type="submit">Buscar</button>
+    </form>
+    ${q ? `
+    <div class="parts-search-results">
+      <h3 class="parts-search-results-title">Resultados para "${esc(q)}"</h3>
+      <div class="parts-store-list">
+        ${PARTS_STORES.map(s => `<a class="parts-store-link" href="${s.url(q)}" target="_blank" rel="noopener">${esc(s.name)} ↗</a>`).join('')}
+      </div>
+    </div>` : ''}
   `;
 }
 
@@ -1986,6 +2042,14 @@ async function handleSubmit(e){
     await supabase.from('general_pendientes').insert({ text, checked: false, sort_order: state.generalPendientes.length });
     input.value = '';
     loadAll();
+    return;
+  }
+
+  if(form.id === 'partsSearchForm'){
+    const q = form.querySelector('.parts-search-input').value.trim();
+    if(!q) return;
+    state.partsSearchQuery = q;
+    render();
     return;
   }
 
