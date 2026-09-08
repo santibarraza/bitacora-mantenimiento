@@ -703,12 +703,19 @@ const SPECIAL_VIEWS = [HOME_VIEW, VEHICLES_VIEW, ALL_PENDIENTES, PROVIDERS_VIEW,
 const VAPID_PUBLIC_KEY = 'BPYe6oq8H_gRDtAsFnG7TJ6YNpe4L3YMCcL30aE0-xhifFxA5xSP_n9JaRXQjPvJ9DBokkHRZSKWI5i1s58LMuQ';
 const ACCESS_OK_KEY = 'bitacora_access_ok';
 const PUSH_SUBSCRIBED_KEY = 'bitacora_push_subscribed';
+const ML_ACCENT_MAP = { 'á':'a', 'é':'e', 'í':'i', 'ó':'o', 'ú':'u', 'ü':'u', 'ñ':'n' };
+function mlSlug(q){
+  let s = q.toString().trim().toLowerCase();
+  s = s.replace(/[áéíóúüñ]/g, ch => ML_ACCENT_MAP[ch] || ch);
+  s = s.replace(/[^a-z0-9\s-]/g, '');
+  s = s.replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  return s || 'busqueda';
+}
 const PARTS_STORES = [
-  { name: 'Amazon', url: q => `https://www.amazon.com/s?k=${encodeURIComponent(q)}` },
-  { name: 'eBay', url: q => `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}` },
-  { name: 'AutoZone', url: q => `https://www.autozone.com/searchresult?searchText=${encodeURIComponent(q)}` },
-  { name: "O'Reilly Auto Parts", url: q => `https://www.oreillyauto.com/search?q=${encodeURIComponent(q)}` },
-  { name: 'Partzilla (motos, marino, motores)', url: q => `https://www.partzilla.com/search?q=${encodeURIComponent(q)}` },
+  { name: 'Amazon México', url: q => `https://www.amazon.com.mx/s?k=${encodeURIComponent(q)}` },
+  { name: 'Mercado Libre', url: q => `https://listado.mercadolibre.com.mx/${mlSlug(q)}` },
+  { name: 'AutoZone México', url: q => `https://www.autozone.com.mx/searchresult?searchText=${encodeURIComponent(q)}` },
+  { name: 'Powerboats (motores y partes marinas)', url: q => `https://www.powerboats.com.mx/search?q=${encodeURIComponent(q)}` },
   { name: 'Google', url: q => `https://www.google.com/search?q=${encodeURIComponent(q)}` },
 ];
 const PRIORITY_LABELS = { alta: 'Alta', media: 'Media', baja: 'Baja' };
