@@ -289,7 +289,7 @@
     border:1px solid var(--line); cursor:zoom-in; background:var(--panel);
   }
   .photo-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .photo-remove, .att-remove{
+  .photo-remove, .att-remove, .diagram-remove{
     position:absolute; top:2px; right:2px; width:1.1rem; height:1.1rem; border-radius:50%;
     background:var(--ink); color:var(--text); border:none; font-size:.65rem; line-height:1;
     cursor:pointer; display:flex; align-items:center; justify-content:center;
@@ -503,6 +503,29 @@
     cursor:text; border-radius:2px; white-space:pre-line;
   }
   .techref-content:hover{ outline:1px dashed var(--muted); outline-offset:2px; }
+  .techref-image-wrap{ margin-top:.6rem; display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+  .photo-thumb.techref-photo{ width:100%; max-width:340px; height:auto; cursor:zoom-in; }
+  .photo-thumb.techref-photo img{ width:100%; height:auto; object-fit:contain; display:block; }
+  .techref-image-remove{
+    position:absolute; top:4px; right:4px; width:1.3rem; height:1.3rem; border-radius:50%;
+    background:var(--ink); color:var(--text); border:none; font-size:.7rem; line-height:1;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .techref-attach-btn{
+    background:transparent; border:1px dashed var(--line); color:var(--muted);
+    border-radius:6px; padding:.4rem .6rem; cursor:pointer; display:inline-flex;
+    align-items:center; gap:.4rem; font-size:.78rem; text-transform:uppercase; letter-spacing:.03em;
+  }
+  .techref-attach-btn:hover{ border-color:var(--accent); color:var(--accent); }
+  .techref-attach-btn svg{ width:14px; height:14px; }
+
+  .ficha-quick-adds{ display:flex; flex-wrap:wrap; gap:.5rem; margin:0 0 .75rem; }
+  .ficha-quick-add{
+    background:transparent; border:1px dashed var(--line); color:var(--muted);
+    border-radius:999px; padding:.3rem .7rem; cursor:pointer; font-size:.78rem;
+    font-family:inherit;
+  }
+  .ficha-quick-add:hover{ border-color:var(--accent); color:var(--accent); }
 
   .add-techref-form{
     display:flex; gap:.5rem; flex-wrap:wrap; align-items:flex-start;
@@ -567,6 +590,11 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const supabase = createClient('https://jfivdvkhifqhirrqhcfl.supabase.co', 'sb_publishable_dRuee0FIALTamxZaS1x4gg_jdPdRR6x');
 
 const ATTACH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 12.5l6.5-6.5a3 3 0 1 1 4.24 4.24L10.5 18.5a5 5 0 1 1-7.07-7.07L12 3"/></svg>';
+const FICHA_QUICK_LABELS = [
+  'Aceite de motor', 'Filtro de aceite', 'Filtro de aire', 'Filtro de combustible',
+  'Bujías', 'Calibre de bujía', 'Batería', 'Presión llantas del.', 'Presión llantas tras.',
+  'Líquido de frenos', 'Refrigerante', 'Correa de distribución',
+];
 const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const HOME_VIEW = '__home__';
 const VEHICLES_VIEW = '__vehicles__';
@@ -983,6 +1011,15 @@ function renderVehiclesListPanel(){
   if(state.showAddVehicleForm) document.getElementById('newVehicleName')?.focus();
 }
 
+function renderInfoRow(row, editMode){
+  return `
+    <div class="info-row">
+      <span class="info-label">${esc(row.label)}</span>
+      <span class="info-value"${editMode ? ` data-action="edit-info-value" data-info-id="${row.id}"` : ''}>${row.value ? esc(row.value) : '<span class="ph">—</span>'}</span>
+      ${editMode ? `<button type="button" class="icon-btn delete-info" data-info-id="${row.id}" title="Eliminar">✕</button>` : ''}
+    </div>`;
+}
+
 function renderPanels(){
   if(state.activeId === HOME_VIEW){ renderHomePanel(); return; }
   if(state.activeId === VEHICLES_VIEW){ renderVehiclesListPanel(); return; }
@@ -999,6 +1036,8 @@ function renderPanels(){
   const stats = costStats(v.historial);
   const unit = v.odometer_unit || 'km';
   const editMode = state.infoEditMode;
+  const fichaRows = v.info.filter(row => row.category === 'ficha_tecnica');
+  const generalInfoRows = v.info.filter(row => row.category !== 'ficha_tecnica');
   panelsEl.innerHTML = `
     <div class="vehicle-panel-header">
       <span class="v-name" data-action="edit-vehicle-name" data-vid="${v.id}" title="Click para renombrar">${esc(v.name)}</span>
@@ -1019,16 +1058,29 @@ function renderPanels(){
 
     <div class="v-info">
       <div class="v-info-header">
-        <h3>Información general</h3>
+        <h3>Ficha técnica</h3>
         <button type="button" class="icon-btn edit-info-toggle${editMode ? ' active' : ''}" data-vid="${v.id}" title="${editMode ? 'Terminar edición' : 'Editar información y fotos'}">${editMode ? '✓ Listo' : '✎ Editar'}</button>
       </div>
       <div class="info-fields">
-        ${v.info.map(row => `
-          <div class="info-row">
-            <span class="info-label">${esc(row.label)}</span>
-            <span class="info-value"${editMode ? ` data-action="edit-info-value" data-info-id="${row.id}"` : ''}>${row.value ? esc(row.value) : '<span class="ph">—</span>'}</span>
-            ${editMode ? `<button type="button" class="icon-btn delete-info" data-info-id="${row.id}" title="Eliminar">✕</button>` : ''}
-          </div>`).join('')}
+        ${fichaRows.map(row => renderInfoRow(row, editMode)).join('') || (!editMode ? '<p class="empty-state">Aún no agregas datos de la ficha técnica (aceite, bujía, filtros...).</p>' : '')}
+      </div>
+      ${editMode ? `
+      <div class="ficha-quick-adds">
+        ${FICHA_QUICK_LABELS.filter(l => !fichaRows.some(r => r.label === l)).map(l => `<button type="button" class="ficha-quick-add" data-vid="${v.id}" data-label="${esc(l)}">+ ${esc(l)}</button>`).join('')}
+      </div>
+      <form class="add-info-form add-ficha-form" data-vid="${v.id}" data-category="ficha_tecnica">
+        <input class="info-label-input" type="text" placeholder="Campo (ej. Aceite de motor)" required>
+        <input class="info-value-input" type="text" placeholder="Valor (ej. 10W-40, 4L)">
+        <button class="btn-ghost" type="submit">Añadir</button>
+      </form>` : ''}
+    </div>
+
+    <div class="v-info">
+      <div class="v-info-header">
+        <h3>Información general</h3>
+      </div>
+      <div class="info-fields">
+        ${generalInfoRows.map(row => renderInfoRow(row, editMode)).join('')}
       </div>
       ${editMode ? `
       <form class="add-info-form" data-vid="${v.id}">
@@ -1178,6 +1230,11 @@ function renderTechRefEntry(t){
       <button type="button" class="icon-btn delete-techref" data-techref-id="${t.id}" title="Eliminar">✕</button>
     </div>
     <span class="techref-content" data-action="edit-techref-content" data-techref-id="${t.id}">${t.content ? esc(t.content).replace(/\n/g, '<br>') : '<span class="ph">+ detalle</span>'}</span>
+    <div class="techref-image-wrap">
+      ${t.image_url ? `<div class="photo-thumb techref-photo"><img src="${t.image_url}" data-full="${t.image_url}"><button type="button" class="techref-image-remove" data-techref-id="${t.id}" title="Quitar imagen">✕</button></div>`
+        : `<button type="button" class="techref-attach-btn" data-techref-id="${t.id}">${ATTACH_SVG}<span>Agregar imagen</span></button>`}
+      <input type="file" accept="image/*" class="techref-image-input" data-techref-id="${t.id}" hidden>
+    </div>
   </div>`;
 }
 
@@ -1392,8 +1449,16 @@ async function exportVehiclePDF(vid){
     if(v.odometer_value != null) line(`${unit === 'km' ? 'Kilometraje' : 'Lectura'} actual: ${numFmt(v.odometer_value)} ${unit}`);
     y += 3;
 
+    const fichaRowsPdf = v.info.filter(row => row.category === 'ficha_tecnica');
+    const generalInfoRowsPdf = v.info.filter(row => row.category !== 'ficha_tecnica');
+
+    heading('Ficha técnica');
+    if(fichaRowsPdf.length) fichaRowsPdf.forEach(row => line(`${row.label}: ${row.value || '—'}`));
+    else line('Sin datos de ficha técnica registrados.');
+    y += 3;
+
     heading('Información general');
-    if(v.info.length) v.info.forEach(row => line(`${row.label}: ${row.value || '—'}`));
+    if(generalInfoRowsPdf.length) generalInfoRowsPdf.forEach(row => line(`${row.label}: ${row.value || '—'}`));
     else line('Sin información registrada.');
     y += 3;
 
@@ -1718,6 +1783,26 @@ async function handleClick(e){
     return;
   }
 
+  const techRefAttachBtn = e.target.closest('.techref-attach-btn');
+  if(techRefAttachBtn){ techRefAttachBtn.parentElement.querySelector('.techref-image-input').click(); return; }
+
+  const rmTechRefImage = e.target.closest('.techref-image-remove');
+  if(rmTechRefImage){
+    await supabase.from('tech_reference').update({ image_url: null }).eq('id', rmTechRefImage.dataset.techrefId);
+    loadAll();
+    return;
+  }
+
+  const fichaQuickAdd = e.target.closest('.ficha-quick-add');
+  if(fichaQuickAdd){
+    const vid = fichaQuickAdd.dataset.vid;
+    const label = fichaQuickAdd.dataset.label;
+    const v = findVehicle(vid);
+    await supabase.from('vehicle_info').insert({ vehicle_id: vid, label, value: '', category: 'ficha_tecnica', sort_order: v ? v.info.length : 0 });
+    loadAll();
+    return;
+  }
+
   const delLog = e.target.closest('.delete-log');
   if(delLog){
     const id = delLog.closest('.log-entry').dataset.histId;
@@ -1821,6 +1906,16 @@ async function handleChange(e){
     loadAll();
     return;
   }
+  if(t.classList.contains('techref-image-input')){
+    const file = t.files[0]; if(!file) return;
+    const techRefId = t.dataset.techrefId;
+    const att = await uploadAttachment(file, `tech-reference/${techRefId}`);
+    t.value = '';
+    if(!att) return;
+    await supabase.from('tech_reference').update({ image_url: att.url }).eq('id', techRefId);
+    loadAll();
+    return;
+  }
   if(t.classList.contains('log-repeat-select') || t.classList.contains('log-date-input')){
     const form = t.closest('.add-log-form');
     if(!form) return;
@@ -1861,11 +1956,12 @@ async function handleSubmit(e){
 
   if(form.classList.contains('add-info-form')){
     const vid = form.dataset.vid;
+    const category = form.dataset.category || null;
     const label = form.querySelector('.info-label-input').value.trim();
     const value = form.querySelector('.info-value-input').value.trim();
     if(!label) return;
     const v = findVehicle(vid);
-    await supabase.from('vehicle_info').insert({ vehicle_id: vid, label, value, sort_order: v ? v.info.length : 0 });
+    await supabase.from('vehicle_info').insert({ vehicle_id: vid, label, value, category, sort_order: v ? v.info.length : 0 });
     form.reset();
     loadAll();
     return;
