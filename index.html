@@ -169,14 +169,28 @@
   }
 
   /* --- Consumo de combustible --- */
+  .fuel-summary{
+    display:flex; flex-direction:column; gap:.15rem; background:var(--panel);
+    border:1px solid var(--line); border-radius:6px; padding:.6rem .8rem; margin-bottom:.6rem;
+  }
+  .fuel-summary-main{ display:flex; align-items:baseline; gap:.3rem; }
+  .fuel-summary-figure{ font-size:1.4rem; font-weight:700; color:var(--accent); }
+  .fuel-summary-unit{ font-size:.85rem; color:var(--muted); }
+  .fuel-summary-label{ font-size:.8rem; color:var(--muted); margin-left:.2rem; }
+  .fuel-summary-range{ font-size:.78rem; color:var(--muted); }
   .fuel-list{ display:flex; flex-direction:column; gap:.4rem; margin-bottom:.6rem; }
   .fuel-row{
     display:flex; align-items:center; gap:.7rem; background:var(--panel);
     border:1px solid var(--line); border-radius:6px; padding:.5rem .75rem; flex-wrap:wrap; font-size:.82rem;
   }
   .fuel-date{ color:var(--muted); white-space:nowrap; }
-  .fuel-rate{ color:var(--accent); font-weight:600; margin-left:auto; }
+  .fuel-rate-group{ display:flex; align-items:center; gap:.6rem; margin-left:auto; flex-wrap:wrap; }
+  .fuel-rate{ color:var(--accent); font-weight:600; white-space:nowrap; }
   .fuel-partial{ color:var(--muted); font-style:italic; }
+  .fuel-diff{ font-size:.76rem; font-weight:600; white-space:nowrap; }
+  .fuel-diff.good{ color:#4caf50; }
+  .fuel-diff.bad{ color:#e5533d; }
+  .fuel-diff.neutral{ color:var(--muted); }
   .add-fuel-form{
     display:flex; gap:.5rem; flex-wrap:wrap; align-items:center;
     background:var(--panel-2); border:1px solid var(--line); border-radius:6px; padding:.55rem .7rem;
@@ -716,6 +730,7 @@ const PARTS_STORES = [
   { name: 'Mercado Libre', url: q => `https://listado.mercadolibre.com.mx/${mlSlug(q)}` },
   { name: 'AutoZone México', url: q => `https://www.autozone.com.mx/searchresult?searchText=${encodeURIComponent(q)}` },
   { name: 'Powerboats (motores y partes marinas)', url: q => `https://www.powerboats.com.mx/search?q=${encodeURIComponent(q)}` },
+  { name: 'Partzilla (partes marinas OEM, envíos internacionales)', url: q => `https://www.partzilla.com/search?q=${encodeURIComponent(q)}` },
   { name: 'Google', url: q => `https://www.google.com/search?q=${encodeURIComponent(q)}` },
 ];
 const PRIORITY_LABELS = { alta: 'Alta', media: 'Media', baja: 'Baja' };
@@ -973,18 +988,59 @@ function fuelStatsFor(v){
     if(f.odometer_value != null) prevOdo = f.odometer_value;
     withRate.push({ ...f, rate });
   }
-  return withRate.reverse();
+  // El rendimiento (distancia/volumen) solo se puede promediar entre cargas que usan
+  // la misma unidad de volumen (L vs gal cambia la escala ~3.8x) — se compara cada
+  // carga contra el promedio de cargas con la misma unidad que la más reciente.
+  const refUnit = withRate.length ? (withRate[withRate.length - 1].volume_unit || 'L') : 'L';
+  const comparableRates = withRate.filter(f => f.rate != null && (f.volume_unit || 'L') === refUnit).map(f => f.rate);
+  const avgRate = comparableRates.length ? comparableRates.reduce((a, b) => a + b, 0) / comparableRates.length : null;
+  const bestRate = comparableRates.length ? Math.max(...comparableRates) : null;
+  const worstRate = comparableRates.length ? Math.min(...comparableRates) : null;
+  const result = withRate.map(f => {
+    const comparable = f.rate != null && avgRate != null && (f.volume_unit || 'L') === refUnit;
+    return { ...f, diffPct: comparable ? ((f.rate - avgRate) / avgRate) * 100 : null };
+  }).reverse();
+  result.avgRate = avgRate;
+  result.bestRate = bestRate;
+  result.worstRate = worstRate;
+  result.rateCount = comparableRates.length;
+  result.refUnit = refUnit;
+  return result;
 }
 
 function renderFuelRow(f, unit){
+  let diffBadge = '';
+  if(f.diffPct != null){
+    const good = f.diffPct >= 5;
+    const bad = f.diffPct <= -5;
+    const cls = good ? 'good' : bad ? 'bad' : 'neutral';
+    const arrow = good ? '▲' : bad ? '▼' : '≈';
+    diffBadge = `<span class="fuel-diff ${cls}" title="Comparado con tu rendimiento promedio">${arrow} ${f.diffPct >= 0 ? '+' : ''}${f.diffPct.toFixed(0)}% vs. promedio</span>`;
+  }
   return `
   <div class="fuel-row" data-fuel-id="${f.id}">
     <span class="fuel-date">${fmtDate(f.fill_date)}</span>
     <span>${esc(numFmt(f.volume))} ${esc(f.volume_unit || 'L')}${!f.full_tank ? ' <span class="fuel-partial">(parcial)</span>' : ''}</span>
     ${f.odometer_value != null ? `<span>${esc(numFmt(f.odometer_value))} ${esc(unit)}</span>` : ''}
     ${f.cost != null ? `<span>${esc(fmtCost(f.cost))}</span>` : ''}
-    ${f.rate != null ? `<span class="fuel-rate">${f.rate.toFixed(1)} ${esc(unit)}/${esc(f.volume_unit || 'L')}</span>` : ''}
+    ${(f.rate != null || diffBadge) ? `<span class="fuel-rate-group">
+      ${f.rate != null ? `<span class="fuel-rate">${f.rate.toFixed(1)} ${esc(unit)}/${esc(f.volume_unit || 'L')}</span>` : ''}
+      ${diffBadge}
+    </span>` : ''}
     <button type="button" class="icon-btn delete-fuel" data-fuel-id="${f.id}" title="Eliminar">✕</button>
+  </div>`;
+}
+
+function renderFuelSummary(fuelData, unit){
+  if(fuelData.avgRate == null) return '';
+  return `
+  <div class="fuel-summary">
+    <div class="fuel-summary-main">
+      <span class="fuel-summary-figure">${fuelData.avgRate.toFixed(1)}</span>
+      <span class="fuel-summary-unit">${esc(unit)}/${esc(fuelData.refUnit)}</span>
+      <span class="fuel-summary-label">rendimiento promedio</span>
+    </div>
+    <div class="fuel-summary-range">Mejor: ${fuelData.bestRate.toFixed(1)} · Peor: ${fuelData.worstRate.toFixed(1)} ${esc(unit)}/${esc(fuelData.refUnit)} (${fuelData.rateCount} carga${fuelData.rateCount === 1 ? '' : 's'} de tanque lleno consideradas)</div>
   </div>`;
 }
 
@@ -1202,6 +1258,7 @@ function renderPanels(){
   const editMode = state.infoEditMode;
   const fichaRows = v.info.filter(row => row.category === 'ficha_tecnica');
   const generalInfoRows = v.info.filter(row => row.category !== 'ficha_tecnica');
+  const fuelData = fuelStatsFor(v);
   panelsEl.innerHTML = `
     <div class="vehicle-panel-header">
       <span class="v-name" data-action="edit-vehicle-name" data-vid="${v.id}" title="Click para renombrar">${esc(v.name)}</span>
@@ -1302,8 +1359,9 @@ function renderPanels(){
 
       <div class="v-subsection">
         <h3>⛽ Consumo de combustible</h3>
+        ${renderFuelSummary(fuelData, unit)}
         <div class="fuel-list">
-          ${fuelStatsFor(v).map(f => renderFuelRow(f, unit)).join('') || '<p class="empty-state">Aún no registras cargas de combustible.</p>'}
+          ${fuelData.map(f => renderFuelRow(f, unit)).join('') || '<p class="empty-state">Aún no registras cargas de combustible.</p>'}
         </div>
         <form class="add-fuel-form" data-vid="${v.id}">
           <input class="fuel-date-input" type="date" required>
@@ -1314,7 +1372,7 @@ function renderPanels(){
             <option value="gal">gal</option>
           </select>
           <input class="fuel-cost-input" type="text" inputmode="decimal" placeholder="Costo">
-          <label class="fuel-full-label"><input type="checkbox" class="fuel-full-input" checked> Tanque lleno</label>
+          <label class="fuel-full-label"><input type="checkbox" class="fuel-full-input"> Tanque lleno</label>
           <button class="btn-ghost" type="submit">Añadir</button>
         </form>
       </div>
@@ -1739,6 +1797,9 @@ async function exportVehiclePDF(vid){
 
     heading('Consumo de combustible');
     const fuelPdf = fuelStatsFor(v);
+    if(fuelPdf.avgRate != null){
+      line(`Rendimiento promedio: ${fuelPdf.avgRate.toFixed(1)} ${unit}/${fuelPdf.refUnit}  (mejor ${fuelPdf.bestRate.toFixed(1)} · peor ${fuelPdf.worstRate.toFixed(1)})`, 9.5);
+    }
     if(fuelPdf.length){
       fuelPdf.forEach(f => {
         const parts = [`${numFmt(f.volume)} ${f.volume_unit || 'L'}${f.full_tank ? '' : ' (parcial)'}`];
@@ -2318,7 +2379,6 @@ async function handleSubmit(e){
       }
     }
     form.reset();
-    form.querySelector('.fuel-full-input').checked = true;
     loadAll();
     return;
   }
