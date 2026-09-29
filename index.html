@@ -178,6 +178,7 @@
   .fuel-summary-unit{ font-size:.85rem; color:var(--muted); }
   .fuel-summary-label{ font-size:.8rem; color:var(--muted); margin-left:.2rem; }
   .fuel-summary-range{ font-size:.78rem; color:var(--muted); }
+  .fuel-summary-note{ font-size:.74rem; color:var(--muted); font-style:italic; margin-top:.15rem; }
   .fuel-list{ display:flex; flex-direction:column; gap:.4rem; margin-bottom:.6rem; }
   .fuel-row{
     display:flex; align-items:center; gap:.7rem; background:var(--panel);
@@ -186,6 +187,7 @@
   .fuel-date{ color:var(--muted); white-space:nowrap; }
   .fuel-rate-group{ display:flex; align-items:center; gap:.6rem; margin-left:auto; flex-wrap:wrap; }
   .fuel-rate{ color:var(--accent); font-weight:600; white-space:nowrap; }
+  .fuel-approx{ color:var(--muted); font-weight:400; font-size:.72rem; }
   .fuel-partial{ color:var(--muted); font-style:italic; }
   .fuel-diff{ font-size:.76rem; font-weight:600; white-space:nowrap; }
   .fuel-diff.good{ color:#4caf50; }
@@ -979,14 +981,23 @@ function fuelStatsFor(v){
   const sorted = [...(v.fuelLog || [])].sort((a, b) => (a.fill_date < b.fill_date ? -1 : a.fill_date > b.fill_date ? 1 : (a.created_at < b.created_at ? -1 : 1)));
   const withRate = [];
   let prevOdo = null;
+  let prevFull = false;
   for(const f of sorted){
     let rate = null;
-    if(f.full_tank && prevOdo != null && f.odometer_value != null && f.volume){
+    let exact = false;
+    // El rendimiento se calcula entre cada carga y la anterior (sea parcial o llena).
+    // Cuando AMBAS fueron "tanque lleno" el número es exacto (se sabe con certeza cuánto
+    // se consumió); si alguna fue parcial, se muestra igual pero como aproximado, asumiendo
+    // que cada carga repone más o menos lo mismo que se había consumido.
+    if(prevOdo != null && f.odometer_value != null && f.volume){
       const dist = f.odometer_value - prevOdo;
-      if(dist > 0) rate = dist / f.volume;
+      if(dist > 0){
+        rate = dist / f.volume;
+        exact = !!(f.full_tank && prevFull);
+      }
     }
-    if(f.odometer_value != null) prevOdo = f.odometer_value;
-    withRate.push({ ...f, rate });
+    if(f.odometer_value != null){ prevOdo = f.odometer_value; prevFull = !!f.full_tank; }
+    withRate.push({ ...f, rate, exact });
   }
   // El rendimiento (distancia/volumen) solo se puede promediar entre cargas que usan
   // la misma unidad de volumen (L vs gal cambia la escala ~3.8x) — se compara cada
@@ -996,6 +1007,7 @@ function fuelStatsFor(v){
   const avgRate = comparableRates.length ? comparableRates.reduce((a, b) => a + b, 0) / comparableRates.length : null;
   const bestRate = comparableRates.length ? Math.max(...comparableRates) : null;
   const worstRate = comparableRates.length ? Math.min(...comparableRates) : null;
+  const hasExact = withRate.some(f => f.exact);
   const result = withRate.map(f => {
     const comparable = f.rate != null && avgRate != null && (f.volume_unit || 'L') === refUnit;
     return { ...f, diffPct: comparable ? ((f.rate - avgRate) / avgRate) * 100 : null };
@@ -1005,6 +1017,7 @@ function fuelStatsFor(v){
   result.worstRate = worstRate;
   result.rateCount = comparableRates.length;
   result.refUnit = refUnit;
+  result.hasExact = hasExact;
   return result;
 }
 
@@ -1024,7 +1037,7 @@ function renderFuelRow(f, unit){
     ${f.odometer_value != null ? `<span>${esc(numFmt(f.odometer_value))} ${esc(unit)}</span>` : ''}
     ${f.cost != null ? `<span>${esc(fmtCost(f.cost))}</span>` : ''}
     ${(f.rate != null || diffBadge) ? `<span class="fuel-rate-group">
-      ${f.rate != null ? `<span class="fuel-rate">${f.rate.toFixed(1)} ${esc(unit)}/${esc(f.volume_unit || 'L')}</span>` : ''}
+      ${f.rate != null ? `<span class="fuel-rate">${f.rate.toFixed(1)} ${esc(unit)}/${esc(f.volume_unit || 'L')}${f.exact ? '' : ' <span class="fuel-approx">aprox.</span>'}</span>` : ''}
       ${diffBadge}
     </span>` : ''}
     <button type="button" class="icon-btn delete-fuel" data-fuel-id="${f.id}" title="Eliminar">✕</button>
@@ -1038,9 +1051,10 @@ function renderFuelSummary(fuelData, unit){
     <div class="fuel-summary-main">
       <span class="fuel-summary-figure">${fuelData.avgRate.toFixed(1)}</span>
       <span class="fuel-summary-unit">${esc(unit)}/${esc(fuelData.refUnit)}</span>
-      <span class="fuel-summary-label">rendimiento promedio</span>
+      <span class="fuel-summary-label">rendimiento promedio${fuelData.hasExact ? '' : ' (aproximado)'}</span>
     </div>
-    <div class="fuel-summary-range">Mejor: ${fuelData.bestRate.toFixed(1)} · Peor: ${fuelData.worstRate.toFixed(1)} ${esc(unit)}/${esc(fuelData.refUnit)} (${fuelData.rateCount} carga${fuelData.rateCount === 1 ? '' : 's'} de tanque lleno consideradas)</div>
+    <div class="fuel-summary-range">Mejor: ${fuelData.bestRate.toFixed(1)} · Peor: ${fuelData.worstRate.toFixed(1)} ${esc(unit)}/${esc(fuelData.refUnit)} (${fuelData.rateCount} carga${fuelData.rateCount === 1 ? '' : 's'} consideradas)</div>
+    ${!fuelData.hasExact ? `<div class="fuel-summary-note">Aproximado a partir de tus cargas parciales (asume que cada carga repone más o menos lo que se consumió desde la anterior). Si alguna vez llenas el tanque por completo dos veces seguidas, esa parte del cálculo será exacta.</div>` : ''}
   </div>`;
 }
 
@@ -1798,14 +1812,14 @@ async function exportVehiclePDF(vid){
     heading('Consumo de combustible');
     const fuelPdf = fuelStatsFor(v);
     if(fuelPdf.avgRate != null){
-      line(`Rendimiento promedio: ${fuelPdf.avgRate.toFixed(1)} ${unit}/${fuelPdf.refUnit}  (mejor ${fuelPdf.bestRate.toFixed(1)} · peor ${fuelPdf.worstRate.toFixed(1)})`, 9.5);
+      line(`Rendimiento promedio${fuelPdf.hasExact ? '' : ' (aproximado)'}: ${fuelPdf.avgRate.toFixed(1)} ${unit}/${fuelPdf.refUnit}  (mejor ${fuelPdf.bestRate.toFixed(1)} · peor ${fuelPdf.worstRate.toFixed(1)})`, 9.5);
     }
     if(fuelPdf.length){
       fuelPdf.forEach(f => {
         const parts = [`${numFmt(f.volume)} ${f.volume_unit || 'L'}${f.full_tank ? '' : ' (parcial)'}`];
         if(f.odometer_value != null) parts.push(`${numFmt(f.odometer_value)} ${unit}`);
         if(f.cost != null) parts.push(fmtCost(f.cost));
-        if(f.rate != null) parts.push(`${f.rate.toFixed(1)} ${unit}/${f.volume_unit || 'L'}`);
+        if(f.rate != null) parts.push(`${f.rate.toFixed(1)} ${unit}/${f.volume_unit || 'L'}${f.exact ? '' : ' aprox.'}`);
         line(`${fmtDate(f.fill_date)} — ${parts.join('   ·   ')}`, 9.5);
       });
     } else {
